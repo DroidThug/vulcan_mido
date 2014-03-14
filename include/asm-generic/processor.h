@@ -18,13 +18,6 @@
 <<<<<<< HEAD
 #include <asm-generic/relaxed.h>
 =======
-#ifndef cpu_relaxed_read
-#define cpu_relaxed_read(p) (*(p))
-#endif
-
-#ifndef cpu_relaxed_read_long
-#define cpu_relaxed_read_long(p) (*(p))
-#endif
 >>>>>>> 40ef098fa204... asm-generic: processor.h: adding new header file
 
 #ifndef cpu_read_relax
