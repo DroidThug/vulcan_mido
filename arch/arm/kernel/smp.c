@@ -365,6 +365,8 @@ asmlinkage void secondary_start_kernel(void)
 
 	smp_store_cpu_info(cpu);
 
+	smp_store_cpu_info(cpu);
+
 	notify_cpu_starting(cpu);
 
 	calibrate_delay();
