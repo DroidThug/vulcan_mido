@@ -1407,6 +1407,9 @@ static void cache_set_flush(struct closure *cl)
 	if (!c)
 		closure_return(cl);
 
+	if (!c)
+		closure_return(cl);
+
 	bch_cache_accounting_destroy(&c->accounting);
 
 	kobject_put(&c->internal);
