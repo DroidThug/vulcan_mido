@@ -5598,6 +5598,20 @@ static int dl_overflow(struct task_struct *p, int policy,
 }
 
 extern void init_dl_bw(struct dl_bw *dl_b);
+/*
+ * a1 = a0 * e + a * (1 - e)
+ */
+static unsigned long
+calc_load(unsigned long load, unsigned long exp, unsigned long active)
+{
+	unsigned long newload;
+
+	newload = load * exp + active * (FIXED_1 - exp);
+	if (active >= load)
+		newload += FIXED_1-1;
+
+	return newload / FIXED_1;
+} 
 
 /*
  * wake_up_new_task - wake up a newly created task for the first time.
