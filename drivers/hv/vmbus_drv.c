@@ -757,7 +757,7 @@ err_alloc:
 	bus_unregister(&hv_bus);
 
 err_cleanup:
-	hv_cleanup();
+	hv_cleanup(false);
 
 	return ret;
 }
@@ -997,7 +997,7 @@ static void __exit vmbus_exit(void)
 	hv_remove_vmbus_irq();
 	vmbus_free_channels();
 	bus_unregister(&hv_bus);
-	hv_cleanup();
+	hv_cleanup(false);
 	acpi_bus_unregister_driver(&vmbus_acpi_driver);
 	hv_cpu_hotplug_quirk(false);
 }
