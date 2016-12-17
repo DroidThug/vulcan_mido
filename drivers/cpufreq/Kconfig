@@ -182,6 +182,11 @@ config CPU_FREQ_DEFAULT_GOV_CHILL
 	  governor. If unsure have a look at the help section of the
 	  driver. Fallback governor will be the interactive governor.
 
+config CPU_FREQ_DEFAULT_GOV_DESPAIR
+	bool "despair"
+	select CPU_FREQ_GOV_DESPAIR
+	help
+
 endchoice
 
 config CPU_FREQ_GOV_PERFORMANCE
@@ -340,6 +345,10 @@ config CPU_FREQ_GOV_RELAXED
 	help
 	  'relaxed' - similar to 'conservative', but optimized for devices
 	  that go into suspended or display off states often.
+
+config CPU_FREQ_GOV_DESPAIR
+	tristate "'despair' cpufreq governor"
+	depends on CPU_FREQ
 
 config CPU_BOOST
 	tristate "Event base short term CPU freq boost"
