@@ -161,7 +161,7 @@ config CPU_FREQ_DEFAULT_GOV_HELLSACTIVE
 	bool "hellsactive"
 	select CPU_FREQ_GOV_HELLSACTIVE
 	help
-	Use the CPUfreq governor 'hellsactive' as default.		  		  
+	Use the CPUfreq governor 'hellsactive' as default.
 
 config CPU_FREQ_DEFAULT_GOV_RELAXED
 	bool "relaxed"
@@ -190,15 +190,35 @@ config CPU_FREQ_DEFAULT_GOV_CHILL
 config CPU_FREQ_DEFAULT_GOV_DESPAIR
 	bool "despair"
 	select CPU_FREQ_GOV_DESPAIR
-	help
 
 config CPU_FREQ_DEFAULT_GOV_DARKNESS
- 	bool "darkness"
- 	select CPU_FREQ_GOV_DARKNESS
+        bool "darkness"
+        select CPU_FREQ_GOV_DARKNESS
 
 config CPU_FREQ_DEFAULT_GOV_DYNAMIC_INTERACTIVE
 	bool "dynamic_interactive"
-	select CPU_FREQ_GOV_DYNAMIC_INTERACTIVE	  		  
+	select CPU_FREQ_GOV_DYNAMIC_INTERACTIVE 
+
+config CPU_FREQ_DEFAULT_GOV_SMARTASS
+        bool "smartass"
+        select CPU_FREQ_GOV_SMARTASS
+
+config CPU_FREQ_DEFAULT_GOV_SMARTASS2
+        bool "smartass2"
+        select CPU_FREQ_GOV_SMARTASS2
+
+config CPU_FREQ_DEFAULT_GOV_SMARTASSH3
+        bool "smartassH3"
+        select CPU_FREQ_GOV_SMARTASSH3
+
+config CPU_FREQ_DEFAULT_GOV_SMARTMAX
+        bool "smartmax"
+        select CPU_FREQ_GOV_SMARTMAX
+
+config CPU_FREQ_DEFAULT_GOV_SMARTMAX_ESP
+        bool "smartmax_esp"
+        select CPU_FREQ_GOV_SMARTMAX_ESP
+
 
 config CPU_FREQ_DEFAULT_GOV_ALUCARD
 	bool "alucard"
@@ -366,7 +386,7 @@ config CPUFREQ_DT
 	
 config CPU_FREQ_GOV_HELLSACTIVE
 	tristate "'hellsactive' cpufreq governor"
-	depends on CPU_FREQ				  	  
+	depends on CPU_FREQ
 
 config CPU_FREQ_GOV_RELAXED
 	tristate "'relaxed' cpufreq governor"
@@ -381,9 +401,25 @@ config CPU_FREQ_GOV_DESPAIR
 	tristate "'despair' cpufreq governor"
 	depends on CPU_FREQ
 
-config CPU_FREQ_GOV_DYNAMIC_INTERACTIVE
-	tristate "'dynamic_interactive' cpufreq governor"
-	depends on CPU_FREQ			  	  
+config CPU_FREQ_GOV_SMARTASS
+	tristate "'smartass' cpufreq governor"
+	depends on CPU_FREQ
+
+config CPU_FREQ_GOV_SMARTASS2
+        tristate "'smartass2' cpufreq governor"
+        depends on CPU_FREQ
+
+config CPU_FREQ_GOV_SMARTASSH3
+        tristate "'smartassH3' cpufreq governor"
+        depends on CPU_FREQ
+
+config CPU_FREQ_GOV_SMARTMAX
+        tristate "'smartmax' cpufreq governor"
+        depends on CPU_FREQ
+
+config CPU_FREQ_GOV_SMARTMAX_ESP
+        tristate "'smartmax_esp' cpufreq governor"
+        depends on CPU_FREQ
 
 config CPU_FREQ_GOV_ALUCARD
 	tristate "'alucard' cpufreq governor"
