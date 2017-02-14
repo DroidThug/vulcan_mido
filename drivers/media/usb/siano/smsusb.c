@@ -219,6 +219,11 @@ static int smsusb_sendrequest(void *context, void *buffer, size_t size)
 		return -ENOMEM;
 	memcpy(phdr, buffer, size);
 
+	phdr = kmalloc(size, GFP_KERNEL);
+	if (!phdr)
+		return -ENOMEM;
+	memcpy(phdr, buffer, size);
+
 	sms_debug("sending %s(%d) size: %d",
 		  smscore_translate_msg(phdr->msg_type), phdr->msg_type,
 		  phdr->msg_length);
