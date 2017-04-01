@@ -3922,6 +3922,18 @@ static int mdss_dsi_parse_gpio_params(struct platform_device *ctrl_pdev,
 					__func__, __LINE__);
 	}
 
+#ifdef CONFIG_MACH_FIH_NBQ
+	if (ctrl_pdata->disp_ldo_gpio <= 0) {
+		ctrl_pdata->disp_ldo_gpio = of_get_named_gpio(
+			ctrl_pdev->dev.of_node,
+			"qcom,platform-ldo-gpio", 0);
+
+		if (!gpio_is_valid(ctrl_pdata->disp_ldo_gpio))
+			pr_err("%s:%d, Disp_ldo gpio not specified\n",
+					__func__, __LINE__);
+	}
+#endif
+
 	ctrl_pdata->disp_te_gpio = of_get_named_gpio(ctrl_pdev->dev.of_node,
 		"qcom,platform-te-gpio", 0);
 
