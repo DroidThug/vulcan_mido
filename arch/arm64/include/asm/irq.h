@@ -3,7 +3,6 @@
 
 #include <asm-generic/irq.h>
 
-extern void migrate_irqs(void);
 extern void set_handle_irq(void (*handle_irq)(struct pt_regs *));
 
 void arch_trigger_all_cpu_backtrace(void);
