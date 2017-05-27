@@ -1,1 +1,3 @@
-# Placeholder
+# I/O Schedulers
+CONFIG_IOSCHED_FIOPS=true
+CONFIG_IOSCHED_SIO=true
