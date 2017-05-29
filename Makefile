@@ -651,6 +651,9 @@ KBUILD_CFLAGS   += $(call cc-disable-warning,unused-const-variable,)
 KBUILD_CFLAGS   += $(call cc-disable-warning,format-truncation,)
 KBUILD_CFLAGS	+= $(call cc-disable-warning,array-bounds,)
 
+# Kill misleading indentation warnings (fuck you prima)
+KBUILD_CFLAGS   += $(call cc-disable-warning,misleading-indentation,)
+
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os
 else
