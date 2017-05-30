@@ -276,9 +276,8 @@ static struct dentry *__sdcardfs_lookup(struct dentry *dentry,
 	lower_dir_mnt = lower_parent_path->mnt;
 
 	/* Use vfs_path_lookup to check if the dentry exists or not */
-	err = vfs_path_lookup(lower_dir_dentry, lower_dir_mnt, name->name, LOOKUP_CASE_INSENSITIVE,
-                                &lower_path);
-
+	err = vfs_path_lookup(lower_dir_dentry, lower_dir_mnt, name->name, 0,
+				&lower_path);
 	/* check for other cases */
 	if (err == -ENOENT) {
 		struct file *file;
@@ -367,19 +366,22 @@ put_name:
 	/* instatiate a new negative dentry */
 	dname.name = name->name;
 	dname.len = name->len;
-	dname.hash = full_name_hash(dname.name, dname.len);
-	lower_dentry = d_lookup(lower_dir_dentry, &dname);
-	if (lower_dentry)
-		goto setup_lower;
 
-	lower_dentry = d_alloc(lower_dir_dentry, &dname);
+	/* See if the low-level filesystem might want
+	 * to use its own hash
+	 */
+	lower_dentry = d_hash_and_lookup(lower_dir_dentry, &dname);
+	if (IS_ERR(lower_dentry))
+		return lower_dentry;
 	if (!lower_dentry) {
-		err = -ENOMEM;
+		/* We called vfs_path_lookup earlier, and did not get a negative
+		 * dentry then. Don't confuse the lower filesystem by forcing
+		 * one on it now...
+		 */
+		err = -ENOENT;
 		goto out;
 	}
-	d_add(lower_dentry, NULL); /* instantiate and hash */
 
-setup_lower:
 	lower_path.dentry = lower_dentry;
 	lower_path.mnt = mntget(lower_dir_mnt);
 	sdcardfs_set_lower_path(dentry, &lower_path);

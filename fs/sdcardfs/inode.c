@@ -65,6 +65,8 @@ static int sdcardfs_create(struct inode *dir, struct dentry *dentry,
 	struct dentry *lower_parent_dentry = NULL;
 	struct path lower_path;
 	const struct cred *saved_cred = NULL;
+	struct fs_struct *saved_fs;
+	struct fs_struct *copied_fs;
 
 	if (!check_caller_access_to_name(dir, &dentry->d_name)) {
 		err = -EACCES;
@@ -104,6 +106,9 @@ static int sdcardfs_create(struct inode *dir, struct dentry *dentry,
 	fixup_lower_ownership(dentry, dentry->d_name.name);
 
 out:
+	current->fs = saved_fs;
+	free_fs_struct(copied_fs);
+out_unlock:
 	unlock_dir(lower_parent_dentry);
 	sdcardfs_put_lower_path(dentry, &lower_path);
 	REVERT_CRED(saved_cred);
@@ -362,7 +367,6 @@ static int sdcardfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode
 							lower_path.dentry->d_name.name, touch_err);
 			goto out;
 		}
-		kfree(nomedia_fullpath);
 	}
 out:
 	current->fs = saved_fs;
