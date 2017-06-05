@@ -1,6 +1,6 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Linux/arm64 3.18.31-Vulcan-ALPHAv1 Kernel Configuration
+# Linux/arm64 3.18.55-Vulcan Kernel Configuration
 #
 CONFIG_ARM64=y
 CONFIG_64BIT=y
@@ -321,6 +321,7 @@ CONFIG_ARCH_MSM8916=y
 # CONFIG_ARCH_MSM8920 is not set
 # CONFIG_ARCH_MSM8940 is not set
 CONFIG_ARCH_MSM8953=y
+# CONFIG_ARCH_SDM450 is not set
 # CONFIG_ARCH_MSM8937 is not set
 # CONFIG_ARCH_MSM8996 is not set
 # CONFIG_ARCH_MSMCOBALT is not set
@@ -954,7 +955,6 @@ CONFIG_NET_SCH_FIFO=y
 # CONFIG_BATMAN_ADV is not set
 # CONFIG_OPENVSWITCH is not set
 # CONFIG_VSOCKETS is not set
-# CONFIG_NETLINK_MMAP is not set
 # CONFIG_NETLINK_DIAG is not set
 # CONFIG_NET_MPLS_GSO is not set
 # CONFIG_HSR is not set
@@ -3004,7 +3004,6 @@ CONFIG_SND_SOC_WCD_MBHC=y
 # CONFIG_SND_SOC_TPA6130A2 is not set
 CONFIG_SND_SOC_MSM_STUB=y
 CONFIG_SND_SOC_MSM_HDMI_DBA_CODEC_RX=y
-CONFIG_SOUND_CONTROL=y
 # CONFIG_SND_SIMPLE_CARD is not set
 # CONFIG_SOUND_PRIME is not set
 
@@ -3604,7 +3603,6 @@ CONFIG_STAGING=y
 # CONFIG_RTS5208 is not set
 # CONFIG_LINE6_USB is not set
 # CONFIG_FB_XGI is not set
-# CONFIG_BCM_WIMAX is not set
 # CONFIG_FT1000 is not set
 
 #
@@ -3945,7 +3943,6 @@ CONFIG_EFI_RUNTIME_WRAPPERS=y
 CONFIG_EFI_ARMSTUB=y
 CONFIG_MSM_TZ_LOG=y
 # CONFIG_BIF is not set
-# CONFIG_MOBICORE_DRIVER is not set
 
 #
 # Firmware Drivers
