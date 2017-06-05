@@ -76,9 +76,9 @@ scm_version()
 				tag="`git describe --abbrev=0 2>/dev/null`"
 				commit="`echo "$atag" | awk -F- '{printf("-%05d-%s", $(NF-1),$(NF))}'`"
 				printf '%s%s%s' -g "`git show-ref -s --abbrev --tags $tag 2>/dev/null`" $commit
-			# If we don't have a tag at all we print -g{commitish}.
+			# put the release type of the build if there is no tag
 			else
-				printf '%s%s' -g $head
+				printf '%s%s' -g $rel_type
 			fi
 		fi
 
@@ -89,7 +89,7 @@ scm_version()
 
 		# Check for uncommitted changes
 		if git diff-index --name-only HEAD | grep -qv "^scripts/package"; then
-			printf '%s' -dirty
+			printf '%s' -
 		fi
 
 		# All done with git
@@ -110,11 +110,8 @@ scm_version()
 			fi
 		fi
 
-		# Are there uncommitted changes?
-		# These are represented by + after the changeset id.
-		case "$hgid" in
-			*+|*+\ *) printf '%s' -dirty ;;
-		esac
+		# If revision is specified, print that
+		printf '%s' $revision
 
 		# All done with mercurial
 		return
