@@ -1,0 +1,309 @@
+cc8bbb8 ANDROID: mnt: remount should propagate to slaves of slaves
+b2a62e3 merge d_materialise_unique() into d_splice_alias()
+35cd0ff arm64/crypto: use crypto instructions to generate AES key schedule
+c49784d arm64: crypto: increase AES interleave to 4x
+91c64da arm64/crypto: issue aese/aesmc instructions in pairs
+df81556 arm64: crypto: Change priority of arm64 aes cipher.
+2c075a9 crypto: arm64/crc32 - bring in line with generic CRC32
+10d12ca crypto: crc32 - Add ARM64 CRC32 hw accelerated module
+44000ba sched/qhmp_rt: Port changes from rt.c to qhmp_rt.c
+37f0c67 mdss: Fix solid fill unpack pattern
+328ce07 msm: mdss: avoid scheduling pp work during continuous updates
+2e97a8b msm: mdss: Don't cache the address of a stack variable in timings init
+187a89b UPSTREAM: ext4/fscrypto: avoid RCU lookup in d_revalidate
+aab9e95 UPSTREAM: fscrypt: avoid collisions when presenting long encrypted filenames
+519c942 UPSTREAM: fscrypt: fix context consistency check when key(s) unavailable
+8b60d42 UPSTREAM: fscrypt: remove broken support for detecting keyring key revocation
+7282b44 UPSTREAM: fscrypto: lock inode while setting encryption policy
+2c59030 UPSTREAM: fscrypt: fix renaming and linking special files
+86ccf2c UPSTREAM: fscrypto: require write access to mount to set encryption policy
+27ecd6c UPSTREAM: fscrypto: add authorization check for setting encryption policy
+7be146b UPSTREAM: ext4 crypto: use dget_parent() in ext4_d_revalidate()
+6c73677 UPSTREAM: ext4 crypto: fix some error handling
+010fe0d UPSTREAM: ext4 crypto: don't let data integrity writebacks fail with ENOMEM
+9dfe610 UPSTREAM: ext4 crypto: revalidate dentry after adding or removing the key
+caef15e UPSTREAM: ext4: enforce online defrag restriction for encrypted files
+cc42dbb UPSTREAM: ext4 crypto: add missing locking for keyring_key access
+917bde7 ANDROID: ext4 crypto: Disables zeroing on truncation when there's no key
+fffef8d ext4 crypto: fix bugs in ext4_encrypted_zeroout()
+43c0576 ext4 crypto: replace some BUG_ON()'s with error checks
+212b0e3 ext4 crypto: ext4_page_crypto() doesn't need a encryption context
+1e14954 ext4: optimize ext4_writepage() for attempted 4k delalloc writes
+eab2476 ext4 crypto: fix memory leak in ext4_bio_write_page()
+8ce1cc3 ext4: disable zeroout optimization when encryption is enabled
+19e6138 ext4 crypto: remove duplicate header file
+9a63092 ext4 crypto: fix spelling typo in comment
+58ee0f0 ext4 crypto: exit cleanly if ext4_derive_key_aes() fails
+9734ad7 ext4 crypto: check for too-short encrypted file names
+ffa0a34 ext4 crypto: use a jbd2 transaction when adding a crypto policy
+d934ec3 ext4 crypto: fail the mount if blocksize != pagesize
+82f57e2 ext4 crypto: fix sparse warnings in fs/ext4/ioctl.c
+49d0896 ext4 crypto: fix ext4_get_crypto_ctx()'s calling convention in ext4_decrypt_one
+2eaaf8a ext4 crypto: allocate bounce pages using GFP_NOWAIT
+f125d17 ext4 crypto: release crypto resource on module exit
+60decf8 ext4 crypto: handle unexpected lack of encryption keys
+afc566a ext4 crypto: allocate the right amount of memory for the on-disk symlink
+c52c918 ext4 crypto: clean up error handling in ext4_fname_setup_filename
+980dc77 ext4 crypto: policies may only be set on directories
+fb5b8da ext4 crypto: enforce crypto policy restrictions on cross-renames
+c128fbd ext4 crypto: encrypt tmpfile located in encryption protected directory
+497cedb ext4 crypto: make sure the encryption info is initialized on opendir(2)
+1dd50b4 ext4 crypto: set up encryption info for new inodes in ext4_inherit_context()
+ed29996 ext4 crypto: fix memory leaks in ext4_encrypted_zeroout
+7b99a9e ext4 crypto: use per-inode tfm structure
+1e4aabf ext4 crypto: require CONFIG_CRYPTO_CTR if ext4 encryption is enabled
+bec0f0b ext4 crypto: shrink size of the ext4_crypto_ctx structure
+3b06c8a ext4 crypto: get rid of ci_mode from struct ext4_crypt_info
+7c5042c ext4 crypto: use slab caches
+cb7834f ext4: clean up superblock encryption mode fields
+68add88 ext4 crypto: reorganize how we store keys in the inode
+2cfe2d7 ext4 crypto: separate kernel and userspace structure for the key
+a259cbd ext4 crypto: don't allocate a page when encrypting/decrypting file names
+2b20661 ext4 crypto: optimize filename encryption
+3d66361 ext4 crypto: Do not select from EXT4_FS_ENCRYPTION
+f536cfd ext4 crypto: add padding to filenames before encrypting
+cc71f42 ext4 crypto: simplify and speed up filename encryption
+0c188ce ext4 crypto: enable encryption feature flag
+d1e21c5 ext4 crypto: Add symlink encryption
+ece0e42 ext4 crypto: enable filename encryption
+2a41036 ext4 crypto: filename encryption modifications
+c1a8fa6 ext4 crypto: partial update to namei.c for fname crypto
+99d7055 ext4 crypto: insert encrypted filenames into a leaf directory block
+e993cf2 ext4 crypto: teach ext4_htree_store_dirent() to store decrypted filenames
+93e0c2a ext4 crypto: filename encryption facilities
+a6556cf ext4 crypto: implement the ext4 decryption read path
+a1182b6 ext4 crypto: implement the ext4 encryption write path
+96fb662 ext4 crypto: inherit encryption policies on inode and directory create
+acc6015 ext4 crypto: enforce context consistency
+e6b5208 ext4 crypto: add encryption key management facilities
+07e0571 ext4 crypto: add ext4 encryption facilities
+2d3bab4 ext4 crypto: add encryption policy and password salt support
+3c53633 ext4 crypto: add encryption xattr support
+de4f896 ext4 crypto: export ext4_empty_dir()
+7e196ea ext4 crypto: add ext4 encryption Kconfig
+b5876d7 ext4 crypto: reserve codepoints used by the ext4 encryption feature
+b173d41 ext4 crypto: add ext4_mpage_readpages()
+d3328c3 USB: cypress_m8: add endpoint sanity check
+d58a452 ipv6: fix mismerge
+ec1d306 sysctl: Drop reference added by grab_header in proc_sys_readdir
+9057f56 BACKPORT: tcp: avoid infinite loop in tcp_splice_read()
+36c683b packet: fix races in fanout_add()
+fb7603b net/llc: avoid BUG_ON() in skb_orphan()
+128ffb2 ip6_gre: fix ip6gre_err() invalid reads
+7adb325 tty: n_hdlc: get rid of racy n_hdlc.tbuf
+d064a81 drivers: video: Add bounds checking in fb_cmap_to_user
+e567a08 net: ping: check minimum size on ICMP header length
+8c99d16 perf/core: Fix concurrent sys_perf_event_open() vs. 'move_group' race
+bc8d4ab TTY: n_hdlc, fix lockdep false positive
+eddbf2a tmpfs: clear S_ISGID when setting posix ACLs
+ba56c08 sg_write()/bsg_write() is not fit to be called under KERNEL_DS
+c8a1075 net: add length argument to skb_copy_and_csum_datagram_iovec
+9721489 ext4: validate s_first_meta_bg at mount time
+fbcc8d4 net: llc: use correct size for sysctl timeout entries
+124f471 scsi: sg: check length passed to SG_NEXT_CMD_LEN
+411b772 mm: Tighten x86 /dev/mem with zeroing reads
+613fa43 xfrm_user: validate XFRM_MSG_NEWAE XFRMA_REPLAY_ESN_VAL replay_window
+84bf3e1 mm: migrate dirty page without clear_page_dirty_for_io etc
+e81eaa2 ext4: fix data exposure after a crash
+68b0047 bpf: don't let ldimm64 leak map addresses on unprivileged
+33d5d25 KEYS: Disallow keyrings beginning with '.' to be joined as session keyrings
+8fea6be ipc/shm: Fix shmat mmap nil-page protection
+93e2cb9 dccp: fix freeing skb too early for IPV6_RECVPKTINFO
+296ce4e irda: Fix lockdep annotations in hashbin_delete().
+034a1ed net/packet: fix overflow in check for tp_frame_nr
+5b1194a net/packet: fix overflow in check for tp_reserve
+a35706d KEYS: Change the name of the dead type to ".dead" to prevent user access
+bbde72e KEYS: fix keyctl_set_reqkey_keyring() to not leak thread keyrings
+8f0d341 crypto: ahash - Fix EINPROGRESS notification callback
+028e5ff mm/mempolicy.c: fix error handling in set_mempolicy and mbind.
+e8582d2 timer: Added usleep[_range] timer
+13af227 README: introduce markdown-ified README
+1cd1f74 cpufreq: clock to maximum frequency by default
+9caf8fa (vulcan/staging/v1, staging/v1) msm8953: overclocking with cmdline option
+5e50bb1 ASoC: msm8x16-wcd: add speaker gain and prevent reset
+9932830 ASoC: msm8x16-wcd: Sound control: allow further reduction of digital gain
+1cf9686 ASoC: msm8x16-wcd: Sound control: add mic gain
+bdbc2ba ASoC: msm8x16-wcd: Sound control
+2dea284 dm-crypt: increase threads
+4e41af3 Revert "arch: arm: dts: qcom: boot with 6 cores cpus to improve boot time."
+e2f77a1 drivers: ipa_common: kick this stupid hitchhiker
+3a546ac proc: cmdline: declare function and characters
+c0eddf9 Merge branch 'upstream-linux-3.18.y' of https://source.codeaurora.org/quic/la/kernel/msm-3.18 into v1
+88ff45d Linux 3.18.56
+c6444e0 xfs: fix unaligned access in xfs_btree_visit_blocks
+0d60051 xfs: bad assertion for delalloc an extent that start at i_size
+6e12db5 xfs: fix indlen accounting error on partial delalloc conversion
+04c2860 xfs: fix up quotacheck buffer list error handling
+955f115 xfs: prevent multi-fsb dir readahead from reading random blocks
+c4d3116 xfs: handle array index overrun in xfs_dir2_leaf_readbuf()
+8d5d3fb xfs: fix over-copying of getbmap parameters from userspace
+4c890b8 xfs: fix off-by-one on max nr_pages in xfs_find_get_desired_pgoff()
+6a46eea xfs: Fix missed holes in SEEK_HOLE implementation
+aef16f4 mlock: fix mlock count can not decrease in race condition
+85190aa mm/migrate: fix refcount handling when !hugepage_migration_supported()
+e7d2e46 drm/gma500/psb: Actually use VBT mode when it is found
+aa2f9ae slub/memcg: cure the brainless abuse of sysfs attributes
+2c41aea ALSA: hda - apply STAC_9200_DELL_M22 quirk for Dell Latitude D430
+e102d49 pcmcia: remove left-over %Z format
+efaeb8c drm/radeon/ci: disable mclk switching for high refresh rates (v2)
+b54c9ca i2c: i2c-tiny-usb: fix buffer not being DMA capable
+698f506 sctp: fix ICMP processing if skb is non-linear
+4507a04 tcp: avoid fastopen API to be used on AF_UNSPEC
+1d31de2 ipv6: fix out of bound writes in __ip6_append_data()
+cc87092 qmi_wwan: add another Lenovo EM74xx device ID
+ef4656a ipv6: Check ip6_find_1stfragopt() return value properly.
+5ca68db ipv6: Prevent overrun when parsing v6 header options
+9410706 tcp: eliminate negative reordering in tcp_clean_rtx_queue
+56fd34c sctp: do not inherit ipv6_{mc|ac|fl}_list from parent
+dc03072 sctp: fix src address selection if using secondary addresses for ipv6
+b1ff990 tcp: avoid fragmenting peculiar skbs in SACK
+de66696 s390/qeth: avoid null pointer dereference on OSN
+4c81482 s390/qeth: unbreak OSM and OSN support
+03effc4 s390/qeth: handle sysfs error during initialization
+4bb305d dccp/tcp: do not inherit mc_list from parent
+3aad770 netem: fix skb_orphan_partial()
+2bc281e Revert "stackprotector: Increase the per-task stack canary's random range from 32 bits to 64 bits on 64-bit platforms"
+7fa1a16 vulcan: beta-rb-rev1
+82ab08a adreno_idler: Add display state awareness
+8bcd356 adreno_idler: fix typos :)
+6be3481 adreno_idler: fix-up some comments
+c48a489 adreno_idler: fix-up type definitions
+ccb2d73 adreno_idler: remove frequency bump
+b627ac8 adreno_idler: switch to count based instead of time based
+88b3701 Introduce Adreno idler for devfreq-based Adreno devices
+a2aa877 blu_active: upstream changes
+c3ae771 blu_active: reduce low freq ripple effect
+c3bea2c blu_active: updates and fixes
+565b33a blu_active: dynamic cpufreq policy governor designed for latency-sensitive workloads
+b4a0006 msm_performance: don't let userspace change min/max freq policy by default
+2df0289 msm_performance: fix input boosting disable not sticking on big cluster
+460793b tcp_output: set initial TCP window size to 64K (speed improvement)
+00fd63f drivers: wakeup: allow to request and count wakelocks with screen on.
+38e1384 vulcan: Enable I/O sched switcher
+1f13a40 mmc: queue: Configure the I/O sched switcher for mmc block devices
+810004d iosched_switcher: Remove unneeded code in change_elevator()
+1a61d43 iosched_switcher: Ensure the previous elevator name is always present
+1b9ec57 dm: Configure the I/O sched switcher for dm block devices
+c2ff7af scsi: sd: Configure the I/O sched switcher for sda too
+a2ce3c1 iosched_switcher: Allow multiple block devices to be used
+dc3fa38 scsi: sd: Configure the I/O sched switcher for the sde block device
+117b37e block: Add driver to change the I/O scheduler when the screen turns off
+c78a71b proc: Remove additional SafetyNet flags from /proc/cmdline
+25d2c78 vulcan: regenerate defconfig
+63e510c drivers: qcom: msm_performance: remove multiple defination of touchboost integer
+fa90252 arch: vulcan_defconfig: regen
+1193422 vulcan: enable BFQ I/O sched
+dd572aa arch: configs: vulcan_defconfig: regenerate
+fecdbff Makefile: set EXTRAVERSION to Vulcan
+505478c vulcan: true is yes (y)         * idk what was I thinking when I did this Q_Q
+7f622f0 vulcan: enable USB Fastcharge
+0386e6d vulcan: enable ElementalX governor
+40705ce vulcan: enable SDCARDFS and exFAT support
+c1e4e5e vulcan: enable KCAL control
+c569f328 vulcan: enable ZEN I/O sched
+6fc67a0 vulcan: enable SIO and FIOPS scheds
+87a31f5 vulcan: introduce defconfig fragmentation
+51ae325 arch: configs: initial Vulcan defconfig         * copied diretly from mido_defconfig
+4a02e2e msm: qpnp-haptic: disable vibration when vmax_mv_strong is set to min
+cf2dacb sched/wait: Fix a kthread race with wait_woken()
+9dca3e4 sched/deadline: Avoid pointless __setscheduler()
+54cb955 writeback: fix writeback cache thrashing
+5a15a6b firmware_class: Fix firmware_loading_timeout usage of jiffies
+5036d3f mdss_fb: add backlight dimmer option
+711f31b mdss: rotator: Use FIFO kthread for rotator work
+a3fa022 UPSTREAM: lz4: fix wrong compress buffer size for 64-bits
+6080f25 UPSTREAM: zram/zcomp: do not zero out zcomp private pages
+e788251 UPSTREAM: zram: pass gfp from zcomp frontend to backend
+e16db0e power:qpnp-charger: extended charge time from 30s to 100s when battery status is near to full
+3003746 drivers: misc: implement usb fast charge mode
+8ea480d arm64: Fix the ARM userspace build
+2355aa0 sched/deadline: Split cpudl_set() into cpudl_set() and cpudl_clear()
+eba3cf7 sched/deadline: Make CPU heap faster avoiding real swaps on heapify
+a3bac39 sched/deadline: Refactor CPU heap code
+04402bd sched/deadline: Fix wrap-around in DL heap
+5d30b0a sched/deadline: Unify dl_time_before() usage
+29f6cc9 sched/deadline: Remove cpu_active_mask from cpudl_find()
+78df239 sched/deadline: Modify cpudl::free_cpus to reflect rd->online
+feae5ca drivers: wakeup: allow 1 wakeup from IPA_WS every now and then
+007aac7 drivers: wakeup: be more thorough with blocking wakelocks
+0483fca drivers: wakeup: it's pointless to output the active wakeup sources during screen on, no need to go through the rcu locks and list iterations every now and then
+aac5ffb drivers: wakeup: there's no much point in running the blockers during screen on
+8266400 drivers: wakeup: run the wakelock blockers during wakeup_source activation and every resume
+0daac8c drivers: wakeup: more thoroughly deactivation of wakelocks
+23b87e9 drivers: wakeup: add options to disable timerfd, netlink and wlan wakelocks
+a54d253 drivers: wakeup: bypass two WiFi wakelocks
+8c3d8181 power: wakeup: prevent IPA_WS wakelock from being acquired by default
+9640f28 display: add a simple api to query the display state (on/off) at any point in time
+6286abd cpufreq; add elementalx governor
+31bfad9 cpufreq: cache tunables for ondemand and conservative governors
+2621a57 block: Make CFQ default to IOPS mode on SSDs
+b383c2b msm: mdss: KCAL: disable igc update
+ea06ad3 msm: mdss: KCAL: Send a pp display commit when changes are made
+30f57ff mdss: mdp: kcal for mdss_mdp_v1_7
+b852197 cpuidle: don't disable cpuidle when entering suspend
+f29a728 zen-iosched: change fifo_batch to 16
+5a67d0d msm_performance: update for 3.18.x
+0b5c27e adrenoboost: disable by default
+4094985 adrenoboost: finetuning algorithm - scale it a bit down
+059344c msm_adreno_tz: add adrenoboost parameter
+4925c84 usb: gadget: mass_storage: added sysfs entry for cdrom to LUNs
+4dfedd9 block: add zen scheduler
+2bcaa48 Revert "block: scheduler: add ZEN"
+121cc3e msm: vidc: disable CPU L2 cache PC during video sessions
+c3722da block, bfq: add Early Queue Merge (EQM) to BFQ-v7r8 for 3.18.0
+94b26f5 block: introduce the BFQ-v7r8 I/O sched for 3.18.0
+567e294 block: cgroups, kconfig, build bits for BFQ-v7r8-3.18.0
+c2694fc SIO: update for linux 3.18
+f5d189a FIOPS: update for linux 3.18
+79129e3 AIO: Don't plug the I/O queue in do_io_submit()
+00b47e9 binfmt_elf.c: use get_random_int() to fix entropy depleting
+34b98d3 Add exFAT support
+204b18d msm_performance: Make input boosting optional
+3d9ef24 msm: mdss: kcal: Only apply updates on index 0
+bc44309 msm: mdss: KCAL: Send a pp display commit when changes are made
+173880d msm: mdss: KCAL: Do not read from picture adjustment registers
+b100839 msm: mdss: KCAL: Read values from MDP registers wherever possible
+a82b57d msm: mdss: KCAL: Apply default values on boot
+3106c7c msm: mdss: KCAL: Queue changes when panel is powered off
+deeec8a msm: mdss: KCAL: Remove MODULE_DESCRIPTION
+30238ed msm: mdss: KCAL: Update Kconfig description
+8c11acb msm: mdss: KCAL: Update according to linux guidelines and checkpatch.pl
+08543fb msm: mdss: KCAL: Check panel power state before applying values
+1f4d671 msm: mdss: KCAL: Allow kcal_enable to control all post-processing features
+04f946f msm: mdss: Keep KCAL within its own source file
+89026ca msm: mdss: Remove deprecated __dev* markings
+161ca8b msm: mdss: Add pa_v2 support to KCAL
+28d10ea msm: mdss: Replace PGC implementation with PCC for KCAL
+bf9486c msm: mdss: Add KCAL support for post processing control [v2]
+e494bb6 arch: arm: dts: qcom: boot with 6 cores cpus to improve boot time. Now we have 2 perf cores and 4 powers cores enabled at boot to improve the total boot time of the device.
+1ab8122 Adjust Makefile
+3e7d2fc block: zen: set fifo batch to 16 to reduce overload on eMMC and CPU.
+02ac665 block: zen: crashing on selection fixup
+43b73c0 block: scheduler: add ZEN
+ce0920f Added fsync on/off support.
+ee72a91 Add SIO and FIOPS i/o schedulers
+6cadb2d Allow selectable tick rate
+25b70c1 disable crc check
+5b531c8 Fix version name
+aea76da setlocalversion: adapt to use revision and release type
+d79c20a (linaro) mido: remove strong stack protector
+336c3b2 Makefile: adapt for compaitablity with GCC 5+
+982dae1 Fix a compile-time warning
+ff54e2f GCC 7.x: Makefile: Disable format-truncation globally
+23b24c5 Makefile: Disable couple more warnings
+00068d6 drivers: media: msm: camera_v2: fix bool-compare warning
+c71f420 Fix GCC 7.x warnings
+e29d1d0 Makefile: Disable misleading indentation warning
+6568dc8 GCC 7.x: Makefile: Fix device not booting
+e04a8d9 Fix GCC6 Compilation Errors & Warnings
+e03332b Fix standalone compiling
+e8a65a6 mido: Fix appended Image while building standlone
+d8b2e35 sdcardfs: catchup till lsk-3.18
+a86ec80 (or/rebase, or/cm-14.1) Merge branch 'linux-3.18.y' into LA.UM
+b097737 Merge tag 'LA.UM.5.6.r1-04700-89xx.0' into cm-14.1
+04c1d98 defconfig : gud: Remove gud driver
+5557b58 msm : gud: Remove gud driver
+01958d3 ARM : dts: msm: Add 600Mhz GPU clock support for SDM450
+0f78307 ARM : dts: msm: Update gfx clock corners for SDM450
+6225a08 clk : msm: Add support for 600MHz for GPU clock
+f421b24 Merge commit '460d978ef5c7be8d78524f1af046a08e9c44941d' into HEAD
