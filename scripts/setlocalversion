@@ -78,7 +78,7 @@ scm_version()
 				printf '%s%s%s' -g "`git show-ref -s --abbrev --tags $tag 2>/dev/null`" $commit
 			# put the release type of the build if there is no tag
 			else
-				printf '%s%s' -g $rel_type
+				printf '%s%s' $rel_type
 			fi
 		fi
 
@@ -87,10 +87,8 @@ scm_version()
 			printf -- '-svn%s' "`git svn find-rev $head`"
 		fi
 
-		# Check for uncommitted changes
-		if git diff-index --name-only HEAD | grep -qv "^scripts/package"; then
-			printf '%s' -
-		fi
+		# Allow external naming for LULZ
+		printf '%s' $extranaming
 
 		# All done with git
 		return
