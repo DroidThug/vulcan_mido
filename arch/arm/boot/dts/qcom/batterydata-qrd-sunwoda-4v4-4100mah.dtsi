@@ -17,7 +17,6 @@ qcom,qrd_msm8953_id1_4100mah {
 	qcom,batt-id-kohm = <33>;
 	qcom,battery-beta = <3435>;
 	qcom,battery-type = "qrd_msm8953_sunwoda_4100mah";
-	qcom,fastchg-current-ma = <2000>;
 	qcom,fg-cc-cv-threshold-mv = <4390>;
 	qcom,chg-rslow-comp-c1 = <3047055>;
 	qcom,chg-rslow-comp-c2 = <3708812>;

@@ -255,6 +255,7 @@ struct smbchg_chip {
 	struct work_struct		usb_set_online_work;
 	struct delayed_work		vfloat_adjust_work;
 	struct delayed_work		hvdcp_det_work;
+	struct delayed_work		redetect_work;
 	spinlock_t			sec_access_lock;
 	struct mutex			therm_lvl_lock;
 	struct mutex			usb_set_online_lock;
@@ -467,7 +468,7 @@ module_param_named(
 	int, S_IRUSR | S_IWUSR
 );
 
-static int smbchg_default_dcp_icl_ma = 1800;
+static int smbchg_default_dcp_icl_ma = 2400;
 module_param_named(
 	default_dcp_icl_ma, smbchg_default_dcp_icl_ma,
 	int, S_IRUSR | S_IWUSR
@@ -1975,7 +1976,7 @@ static int smbchg_set_fastchg_current_raw(struct smbchg_chip *chip,
 #define USBIN_ACTIVE_PWR_SRC_BIT	BIT(1)
 #define DCIN_ACTIVE_PWR_SRC_BIT		BIT(0)
 #define PARALLEL_REENABLE_TIMER_MS	1000
-#define PARALLEL_CHG_THRESHOLD_CURRENT	1800
+#define PARALLEL_CHG_THRESHOLD_CURRENT	2400
 static bool smbchg_is_usbin_active_pwr_src(struct smbchg_chip *chip)
 {
 	int rc;

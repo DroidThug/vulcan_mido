@@ -210,11 +210,12 @@
 			qcom,iterm-ma = <100>;
 			qcom,float-voltage-mv = <4400>;
 			qcom,resume-delta-mv = <50>;
+			qcom,fastchg-current-ma = <2400>
 			qcom,chg-inhibit-fg;
 			qcom,charge-unknown-battery;
 			qcom,rparasitic-uohm = <100000>;
 			qcom,bms-psy-name = "bms";
-			qcom,thermal-mitigation = <1500 700 600 0>;
+			qcom,thermal-mitigation = <2400 2200 1800 800 0>;
 			qcom,pmic-revid = <&pmi8950_revid>;
 			qcom,force-aicl-rerun;
 			qcom,aicl-rerun-period-s = <180>;
