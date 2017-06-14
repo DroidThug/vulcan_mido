@@ -207,7 +207,7 @@
 			#address-cells = <1>;
 			#size-cells = <1>;
 
-			qcom,fastchg-current-ma = <3000>
+			qcom,fastchg-current-ma = <3000>;
 			qcom,iterm-ma = <100>;
 			qcom,float-voltage-mv = <4400>;
 			qcom,resume-delta-mv = <50>;
@@ -222,7 +222,6 @@
 			qcom,float-voltage-comp = <11>;
 			qcom,autoadjust-vfloat;
 			qcom,fastchg-current-comp = <900>;
-			qcom,float-voltage-comp = <11>;
 
 			qcom,chgr@1000 {
 				reg = <0x1000 0x100>;
@@ -326,7 +325,7 @@
 			#size-cells = <1>;
 			qcom,resume-soc = <99>;
 			qcom,fg-delta-soc = <1>;
-			qcom,vbat-estimate-diff-mv = <100>			
+			qcom,vbat-estimate-diff-mv = <100>;
 			status = "okay";
 			qcom,bcl-lm-threshold-ma = <127>;
 			qcom,bcl-mh-threshold-ma = <405>;
