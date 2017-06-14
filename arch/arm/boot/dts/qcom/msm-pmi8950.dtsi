@@ -207,18 +207,19 @@
 			#address-cells = <1>;
 			#size-cells = <1>;
 
+			qcom,fastchg-current-ma = <3000>
 			qcom,iterm-ma = <100>;
 			qcom,float-voltage-mv = <4400>;
 			qcom,resume-delta-mv = <50>;
-			qcom,fastchg-current-ma = <2400>
 			qcom,chg-inhibit-fg;
 			qcom,charge-unknown-battery;
 			qcom,rparasitic-uohm = <100000>;
 			qcom,bms-psy-name = "bms";
-			qcom,thermal-mitigation = <2400 2200 1800 800 0>;
+			qcom,thermal-mitigation = <1500 700 600 325>;
 			qcom,pmic-revid = <&pmi8950_revid>;
 			qcom,force-aicl-rerun;
 			qcom,aicl-rerun-period-s = <180>;
+			qcom,float-voltage-comp = <11>;
 			qcom,autoadjust-vfloat;
 			qcom,fastchg-current-comp = <900>;
 			qcom,float-voltage-comp = <11>;
@@ -324,6 +325,8 @@
 			#address-cells = <1>;
 			#size-cells = <1>;
 			qcom,resume-soc = <99>;
+			qcom,fg-delta-soc = <1>;
+			qcom,vbat-estimate-diff-mv = <100>			
 			status = "okay";
 			qcom,bcl-lm-threshold-ma = <127>;
 			qcom,bcl-mh-threshold-ma = <405>;
