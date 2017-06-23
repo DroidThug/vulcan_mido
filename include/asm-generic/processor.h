@@ -15,9 +15,7 @@
 #ifndef _ASM_GENERIC_PROCESSOR_H_
 #define _ASM_GENERIC_PROCESSOR_H_
 
-<<<<<<< HEAD
-#define cpu_relaxed_read_long(p) (*(p))
-#endif
+#include <asm-generic/relaxed.h>
 
 #ifndef cpu_read_relax
 #define cpu_read_relax() cpu_relax()
