@@ -15,10 +15,6 @@
 #ifndef _ASM_GENERIC_PROCESSOR_H_
 #define _ASM_GENERIC_PROCESSOR_H_
 
-#include <asm-generic/relaxed.h>
-<<<<<<< HEAD
-=======
-=======
 #ifndef cpu_relaxed_read
 #define cpu_relaxed_read(p) (*(p))
 #endif
@@ -26,8 +22,6 @@
 #ifndef cpu_relaxed_read_long
 #define cpu_relaxed_read_long(p) (*(p))
 #endif
->>>>>>> 40ef098fa204... asm-generic: processor.h: adding new header file
->>>>>>> parent of 05b3a63dd56... asm-generic: processor.h: adding new header file
 
 #ifndef cpu_read_relax
 #define cpu_read_relax() cpu_relax()
