@@ -531,21 +531,6 @@ extern struct cpufreq_governor cpufreq_gov_darkness;
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_DYNAMIC_INTERACTIVE)
 extern struct cpufreq_governor cpufreq_gov_dynamic_interactive;
 #define CPUFREQ_DEFAULT_GOVERNOR (&cpufreq_gov_dynamic_interactive)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_SMARTASS)
-extern struct cpufreq_governor cpufreq_gov_smartass;
-#define CPUFREQ_DEFAULT_GOVERNOR (&cpufreq_gov_smartass)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_SMARTASS2)
-extern struct cpufreq_governor cpufreq_gov_smartass2;
-#define CPUFREQ_DEFAULT_GOVERNOR (&cpufreq_gov_smartass2)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_SMARTASSH3)
-extern struct cpufreq_governor cpufreq_gov_smartassH3;
-#define CPUFREQ_DEFAULT_GOVERNOR (&cpufreq_gov_smartassH3)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_SMARTMAX)
-extern struct cpufreq_governor cpufreq_gov_smartmax;
-#define CPUFREQ_DEFAULT_GOVERNOR (&cpufreq_gov_smartmax)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_SMARTMAX_ESP)
-extern struct cpufreq_governor cpufreq_gov_smartmax_esp;
-#define CPUFREQ_DEFAULT_GOVERNOR (&cpufreq_gov_smartmax_esp)
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_ALUCARD)
 extern struct cpufreq_governor cpufreq_gov_alucard;
 #define CPUFREQ_DEFAULT_GOVERNOR (&cpufreq_gov_alucard)
