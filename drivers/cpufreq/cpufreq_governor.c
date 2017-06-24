@@ -19,8 +19,12 @@
 #include <linux/export.h>
 #include <linux/kernel_stat.h>
 #include <linux/slab.h>
+#include <linux/input.h>
 
 #include "cpufreq_governor.h"
+
+unsigned long touch_jiffies;
+EXPORT_SYMBOL_GPL(touch_jiffies);
 
 static struct attribute_group *get_sysfs_attr(struct dbs_data *dbs_data)
 {
@@ -35,7 +39,6 @@ void dbs_check_cpu(struct dbs_data *dbs_data, int cpu)
 	struct cpu_dbs_common_info *cdbs = dbs_data->cdata->get_cpu_cdbs(cpu);
 	struct od_dbs_tuners *od_tuners = dbs_data->tuners;
 	struct cs_dbs_tuners *cs_tuners = dbs_data->tuners;
-	struct ex_dbs_tuners *ex_tuners = dbs_data->tuners;
 	struct cpufreq_policy *policy;
 	unsigned int sampling_rate;
 	unsigned int max_load = 0;
@@ -56,9 +59,6 @@ void dbs_check_cpu(struct dbs_data *dbs_data, int cpu)
 		sampling_rate *= od_dbs_info->rate_mult;
 
 		ignore_nice = od_tuners->ignore_nice_load;
-	} else if (dbs_data->cdata->governor == GOV_ELEMENTALX) {
-		sampling_rate = ex_tuners->sampling_rate;
-		ignore_nice = ex_tuners->ignore_nice_load;
 	} else {
 		sampling_rate = cs_tuners->sampling_rate;
 		ignore_nice = cs_tuners->ignore_nice_load;
@@ -245,14 +245,88 @@ static void set_sampling_rate(struct dbs_data *dbs_data,
 	if (dbs_data->cdata->governor == GOV_CONSERVATIVE) {
 		struct cs_dbs_tuners *cs_tuners = dbs_data->tuners;
 		cs_tuners->sampling_rate = sampling_rate;
-	} else if (dbs_data->cdata->governor == GOV_ELEMENTALX) {
-		struct ex_dbs_tuners *ex_tuners = dbs_data->tuners;
-		ex_tuners->sampling_rate = sampling_rate;
 	} else {
 		struct od_dbs_tuners *od_tuners = dbs_data->tuners;
 		od_tuners->sampling_rate = sampling_rate;
 	}
 }
+
+static void gov_input_event(struct input_handle *handle, unsigned int type,
+		unsigned int code, int value)
+{
+	touch_jiffies = jiffies;
+}
+
+static int gov_input_connect(struct input_handler *handler,
+		struct input_dev *dev, const struct input_device_id *id)
+{
+	struct input_handle *handle;
+	int error;
+
+	handle = kzalloc(sizeof(struct input_handle), GFP_KERNEL);
+	if (!handle)
+		return -ENOMEM;
+
+	handle->dev = dev;
+	handle->handler = handler;
+	handle->name = "cpufreq";
+
+	error = input_register_handle(handle);
+	if (error)
+		goto err2;
+
+	error = input_open_device(handle);
+	if (error)
+		goto err1;
+
+	return 0;
+err1:
+	input_unregister_handle(handle);
+err2:
+	kfree(handle);
+	return error;
+}
+
+static void gov_input_disconnect(struct input_handle *handle)
+{
+	input_close_device(handle);
+	input_unregister_handle(handle);
+	kfree(handle);
+}
+
+static const struct input_device_id gov_ids[] = {
+	/* multi-touch touchscreen */
+	{
+		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
+			INPUT_DEVICE_ID_MATCH_ABSBIT,
+		.evbit = { BIT_MASK(EV_ABS) },
+		.absbit = { [BIT_WORD(ABS_MT_POSITION_X)] =
+			BIT_MASK(ABS_MT_POSITION_X) |
+			BIT_MASK(ABS_MT_POSITION_Y) },
+	},
+	/* touchpad */
+	{
+		.flags = INPUT_DEVICE_ID_MATCH_KEYBIT |
+			INPUT_DEVICE_ID_MATCH_ABSBIT,
+		.keybit = { [BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH) },
+		.absbit = { [BIT_WORD(ABS_X)] =
+			BIT_MASK(ABS_X) | BIT_MASK(ABS_Y) },
+	},
+	/* Keypad */
+	{
+		.flags = INPUT_DEVICE_ID_MATCH_EVBIT,
+		.evbit = { BIT_MASK(EV_KEY) },
+	},
+	{ },
+};
+
+static struct input_handler gov_input_handler = {
+	.event		= gov_input_event,
+	.connect	= gov_input_connect,
+	.disconnect	= gov_input_disconnect,
+	.name		= "cpufreq_gov",
+	.id_table	= gov_ids,
+};
 
 int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 		struct common_dbs_data *cdata, unsigned int event)
@@ -260,11 +334,9 @@ int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 	struct dbs_data *dbs_data;
 	struct od_cpu_dbs_info_s *od_dbs_info = NULL;
 	struct cs_cpu_dbs_info_s *cs_dbs_info = NULL;
-	struct ex_cpu_dbs_info_s *ex_dbs_info = NULL;
 	struct od_ops *od_ops = NULL;
 	struct od_dbs_tuners *od_tuners = NULL;
 	struct cs_dbs_tuners *cs_tuners = NULL;
-	struct ex_dbs_tuners *ex_tuners = NULL;
 	struct cpu_dbs_common_info *cpu_cdbs;
 	unsigned int sampling_rate, latency, ignore_nice, j, cpu = policy->cpu;
 	int io_busy = 0;
@@ -295,12 +367,7 @@ int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 
 		dbs_data->cdata = cdata;
 		dbs_data->usage_count = 1;
-
-		if (cdata->governor == GOV_ELEMENTALX)
-			rc = cdata->init_ex(dbs_data, policy);
-		else
-			rc = cdata->init(dbs_data, policy);
-
+		rc = cdata->init(dbs_data);
 		if (rc) {
 			pr_err("%s: POLICY_INIT: init() failed\n", __func__);
 			kfree(dbs_data);
@@ -375,11 +442,6 @@ int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 		cs_dbs_info = dbs_data->cdata->get_cpu_dbs_info_s(cpu);
 		sampling_rate = cs_tuners->sampling_rate;
 		ignore_nice = cs_tuners->ignore_nice_load;
-	} else if (dbs_data->cdata->governor == GOV_ELEMENTALX) {
-		ex_tuners = dbs_data->tuners;
-		ex_dbs_info = dbs_data->cdata->get_cpu_dbs_info_s(cpu);
-		sampling_rate = ex_tuners->sampling_rate;
-		ignore_nice = ex_tuners->ignore_nice_load;
 	} else {
 		od_tuners = dbs_data->tuners;
 		od_dbs_info = dbs_data->cdata->get_cpu_dbs_info_s(cpu);
@@ -424,9 +486,6 @@ int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 			cs_dbs_info->down_skip = 0;
 			cs_dbs_info->enable = 1;
 			cs_dbs_info->requested_freq = policy->cur;
-		} else if (dbs_data->cdata->governor == GOV_ELEMENTALX) {
-			ex_dbs_info->down_floor = 0;
-			ex_dbs_info->enable = 1;
 		} else {
 			od_dbs_info->rate_mult = 1;
 			od_dbs_info->sample_type = OD_NORMAL_SAMPLE;
@@ -440,14 +499,14 @@ int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 
 		gov_queue_work(dbs_data, policy,
 				delay_for_sampling_rate(sampling_rate), true);
+
+		if (!cpu)
+			rc = input_register_handler(&gov_input_handler);
 		break;
 
 	case CPUFREQ_GOV_STOP:
 		if (dbs_data->cdata->governor == GOV_CONSERVATIVE)
 			cs_dbs_info->enable = 0;
-
-		if (dbs_data->cdata->governor == GOV_ELEMENTALX)
-			ex_dbs_info->enable = 0;
 
 		gov_cancel_work(dbs_data, policy);
 
@@ -457,6 +516,8 @@ int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 
 		mutex_unlock(&dbs_data->mutex);
 
+		if (!cpu)
+			input_unregister_handler(&gov_input_handler);
 		break;
 
 	case CPUFREQ_GOV_LIMITS:
