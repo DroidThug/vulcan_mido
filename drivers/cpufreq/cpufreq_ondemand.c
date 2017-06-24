@@ -291,11 +291,8 @@ static void update_sampling_rate(struct dbs_data *dbs_data,
 
 <<<<<<< HEAD
 <<<<<<< HEAD
-<<<<<<< HEAD
 			cancel_delayed_work_sync(&dbs_info->cdbs.dwork);
 =======
-=======
->>>>>>> parent of d9cd49528fd3... cpufreq: governor: Name delayed-work as dwork
 =======
 >>>>>>> parent of d9cd49528fd3... cpufreq: governor: Name delayed-work as dwork
 			mutex_unlock(&dbs_info->cdbs.timer_mutex);
