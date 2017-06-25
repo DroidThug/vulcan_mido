@@ -49,6 +49,8 @@ static bool enable_timerfd_ws = true;
 module_param(enable_timerfd_ws, bool, 0644);
 static bool enable_netlink_ws = true;
 module_param(enable_netlink_ws, bool, 0644);
+static bool enable_netmgr_wl_ws = true;
+module_param(enable_netmgr_wl_ws, bool, 0644);
 static bool enable_wlan_wd_wake_ws = true;
 module_param(enable_wlan_wd_wake_ws, bool, 0644);
 
