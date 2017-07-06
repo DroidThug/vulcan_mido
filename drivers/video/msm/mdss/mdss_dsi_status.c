@@ -104,6 +104,15 @@ static void check_dsi_ctrl_status(struct work_struct *work)
 		return;
 	}
 
+	ctrl_pdata = container_of(
+				dev_get_platdata(&pdsi_status->mfd->pdev->dev),
+				typeof(*ctrl_pdata), panel_data);
+
+	if (!atomic_read(&ctrl_pdata->te_irq_ready)) {
+		enable_status_irq(pdsi_status);
+		return;
+	}
+
 	pdsi_status->mfd->mdp.check_dsi_status(work, interval);
 }
 

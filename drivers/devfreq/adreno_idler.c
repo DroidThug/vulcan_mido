@@ -32,6 +32,7 @@
 #include <linux/devfreq.h>
 #include <linux/display_state.h>
 #include <linux/msm_adreno_devfreq.h>
+#include <linux/display_state.h>
 
 #define ADRENO_IDLER_MAJOR_VERSION 1
 #define ADRENO_IDLER_MINOR_VERSION 1
@@ -49,7 +50,7 @@ module_param_named(adreno_idler_idleworkload, idleworkload, ulong, 0664);
    This implementation is to prevent micro-lags on scrolling or playing games.
    Adreno idler will more actively try to ramp down the frequency
    if this is set to a lower value. */
-static unsigned int idlewait = 20;
+static unsigned int idlewait = 15;
 module_param_named(adreno_idler_idlewait, idlewait, uint, 0664);
 
 /* Taken from ondemand */
@@ -62,14 +63,16 @@ module_param_named(adreno_idler_active, adreno_idler_active, bool, 0664);
 
 static unsigned int idlecount = 0;
 
+/* Boolean to let us know if the display is on*/
+static bool display_on;
+
 int adreno_idler(struct devfreq_dev_status stats, struct devfreq *devfreq,
 		 unsigned long *freq)
 {
 	if (!adreno_idler_active)
 		return 0;
 
-	/* Boolean to let us know if the display is on*/
-	bool display_on = is_display_on();
+	display_on = is_display_on();
 
 	if (stats.busy_time < idleworkload) {
 		/* busy_time >= idleworkload should be considered as a non-idle workload. */

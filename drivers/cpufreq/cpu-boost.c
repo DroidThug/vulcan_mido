@@ -45,7 +45,6 @@ static bool sched_boost_active;
 
 static struct delayed_work input_boost_rem;
 static u64 last_input_time;
-#define MIN_INPUT_INTERVAL (150 * USEC_PER_MSEC)
 
 static int set_input_boost_freq(const char *buf, const struct kernel_param *kp)
 {
@@ -216,10 +215,12 @@ static void do_input_boost(struct work_struct *work)
 	/* Enable scheduler boost to migrate tasks to big cluster */
 	if (sched_boost_on_input) {
 		ret = sched_set_boost(1);
-		if (ret)
+		if (ret) {
+			sched_boost_on_input = false;
 			pr_err("cpu-boost: HMP boost enable failed\n");
-		else
+		} else {
 			sched_boost_active = true;
+		}
 	}
 
 	queue_delayed_work(cpu_boost_wq, &input_boost_rem,
@@ -235,7 +236,7 @@ static void cpuboost_input_event(struct input_handle *handle,
 		return;
 
 	now = ktime_to_us(ktime_get());
-	if (now - last_input_time < MIN_INPUT_INTERVAL)
+	if ((now - last_input_time) < (input_boost_ms * USEC_PER_MSEC))
 		return;
 
 	if (work_pending(&input_boost_work))
