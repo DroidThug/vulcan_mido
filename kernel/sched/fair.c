@@ -46,8 +46,13 @@
  * (to see the precise effective timeslice length of your workload,
  *  run vmstat and monitor the context-switches (cs) field)
  */
+#ifdef CONFIG_ZEN_INTERACTIVE
+unsigned int sysctl_sched_latency			= 3000000ULL;
+unsigned int normalized_sysctl_sched_latency		= 3000000ULL;
+#else
 unsigned int sysctl_sched_latency = 6000000ULL;
 unsigned int normalized_sysctl_sched_latency = 6000000ULL;
+#endif
 
 /*
  * The initial- and re-scaling of tunables is configurable
@@ -65,13 +70,22 @@ enum sched_tunable_scaling sysctl_sched_tunable_scaling
  * Minimal preemption granularity for CPU-bound tasks:
  * (default: 0.75 msec * (1 + ilog(ncpus)), units: nanoseconds)
  */
+#ifdef CONFIG_ZEN_INTERACTIVE
+unsigned int sysctl_sched_min_granularity		= 300000ULL;
+unsigned int normalized_sysctl_sched_min_granularity	= 300000ULL;
+#else
 unsigned int sysctl_sched_min_granularity = 750000ULL;
 unsigned int normalized_sysctl_sched_min_granularity = 750000ULL;
+#endif
 
 /*
  * is kept at sysctl_sched_latency / sysctl_sched_min_granularity
  */
+#ifdef CONFIG_ZEN_INTERACTIVE
+static unsigned int sched_nr_latency = 10;
+#else
 static unsigned int sched_nr_latency = 8;
+#endif
 
 /*
  * After fork, child runs first. If set to 0 (default) then
@@ -95,10 +109,17 @@ unsigned int __read_mostly sysctl_sched_wake_to_idle;
  * and reduces their over-scheduling. Synchronous workloads will still
  * have immediate wakeup/sleep latencies.
  */
+#ifdef CONFIG_ZEN_INTERACTIVE
+unsigned int sysctl_sched_wakeup_granularity		= 500000UL;
+unsigned int normalized_sysctl_sched_wakeup_granularity	= 500000UL;
+
+const_debug unsigned int sysctl_sched_migration_cost	= 250000UL;
+#else
 unsigned int sysctl_sched_wakeup_granularity = 1000000UL;
 unsigned int normalized_sysctl_sched_wakeup_granularity = 1000000UL;
 
 const_debug unsigned int sysctl_sched_migration_cost = 500000UL;
+#endif
 
 /*
  * The exponential sliding  window over which load is averaged for shares
@@ -118,7 +139,11 @@ unsigned int __read_mostly sysctl_sched_shares_window = 10000000UL;
  *
  * default: 5 msec, units: microseconds
   */
+#ifdef CONFIG_ZEN_INTERACTIVE
+unsigned int sysctl_sched_cfs_bandwidth_slice = 3000UL;
+#else
 unsigned int sysctl_sched_cfs_bandwidth_slice = 5000UL;
+#endif
 #endif
 
 static inline void update_load_add(struct load_weight *lw, unsigned long inc)
@@ -2416,8 +2441,8 @@ unsigned int __read_mostly sysctl_sched_downmigrate_pct = 60;
  * Tasks whose nice value is > sysctl_sched_upmigrate_min_nice are never
  * considered as "big" tasks.
  */
-static int __read_mostly sched_upmigrate_min_nice = 15;
-int __read_mostly sysctl_sched_upmigrate_min_nice = 15;
+static int __read_mostly sched_upmigrate_min_nice = 9;
+int __read_mostly sysctl_sched_upmigrate_min_nice = 9;
 
 /*
  * The load scale factor of a CPU gets boosted when its max frequency
@@ -4801,7 +4826,7 @@ enqueue_entity(struct cfs_rq *cfs_rq, struct sched_entity *se, int flags)
 {
 	/*
 	 * Update the normalized vruntime before updating min_vruntime
-	 * through calling update_curr().
+	 * through callig update_curr().
 	 */
 	if (!(flags & ENQUEUE_WAKEUP) || (flags & ENQUEUE_WAKING))
 		se->vruntime += cfs_rq->min_vruntime;
@@ -5571,6 +5596,13 @@ static int do_sched_cfs_period_timer(struct cfs_bandwidth *cfs_b, int overrun)
 	 */
 	cfs_b->timer_active = 1;
 
+	/*
+	 * if we have relooped after returning idle once, we need to update our
+	 * status as actually running, so that other cpus doing
+	 * __start_cfs_bandwidth will stop trying to cancel us.
+	 */
+	cfs_b->timer_active = 1;
+
 	__refill_cfs_bandwidth_runtime(cfs_b);
 
 	if (!throttled) {
@@ -5740,6 +5772,26 @@ static void check_enqueue_throttle(struct cfs_rq *cfs_rq)
 {
 	if (!cfs_bandwidth_used())
 		return;
+
+	/* Synchronize hierarchical throttle counter: */
+	if (unlikely(!cfs_rq->throttle_uptodate)) {
+		struct rq *rq = rq_of(cfs_rq);
+		struct cfs_rq *pcfs_rq;
+		struct task_group *tg;
+
+		cfs_rq->throttle_uptodate = 1;
+
+		/* Get closest up-to-date node, because leaves go first: */
+		for (tg = cfs_rq->tg->parent; tg; tg = tg->parent) {
+			pcfs_rq = tg->cfs_rq[cpu_of(rq)];
+			if (pcfs_rq->throttle_uptodate)
+				break;
+		}
+		if (tg) {
+			cfs_rq->throttle_count = pcfs_rq->throttle_count;
+			cfs_rq->throttled_clock_task = rq_clock_task(rq);
+		}
+	}
 
 	/* an active group must be handled by the update_curr()->put() path */
 	if (!cfs_rq->runtime_enabled || cfs_rq->curr)
@@ -6480,6 +6532,10 @@ find_idlest_cpu(struct sched_group *group, struct task_struct *p, int this_cpu)
 	int least_loaded_cpu = this_cpu;
 	int shallowest_idle_cpu = -1;
 	int i;
+
+	/* Check if we have any choice: */
+	if (group->group_weight == 1)
+		return cpumask_first(sched_group_cpus(group));
 
 	/* Traverse only the allowed CPUs */
 	for_each_cpu_and(i, sched_group_cpus(group), tsk_cpus_allowed(p)) {
@@ -7518,6 +7574,13 @@ static int detach_tasks(struct lb_env *env)
 
 redo:
 	while (!list_empty(tasks)) {
+		/*
+		 * We don't want to steal all, otherwise we may be treated likewise,
+		 * which could at worst lead to a livelock crash.
+		 */
+		if (env->idle != CPU_NOT_IDLE && env->src_rq->nr_running <= 1)
+			break;
+
 		p = list_first_entry(tasks, struct task_struct, se.group_node);
 
 		env->loop++;
@@ -9071,7 +9134,24 @@ more_balance:
 		/* All tasks on this runqueue were pinned by CPU affinity */
 		if (unlikely(env.flags & LBF_ALL_PINNED)) {
 			cpumask_clear_cpu(cpu_of(busiest), cpus);
-			if (!cpumask_empty(cpus)) {
+			/*
+			 * dst_cpu is not a valid busiest cpu in the following
+			 * check since load cannot be pulled from dst_cpu to be
+			 * put on dst_cpu.
+			 */
+			cpumask_clear_cpu(env.dst_cpu, cpus);
+			/*
+			 * Go back to "redo" iff the load-balance cpumask
+			 * contains other potential busiest cpus for the
+			 * current sched domain.
+			 */
+			if (cpumask_intersects(cpus, sched_domain_span(env.sd))) {
+				/*
+				 * Now that the check has passed, reenable
+				 * dst_cpu so that load can be calculated on
+				 * it in the redo path.
+				 */
+				cpumask_set_cpu(env.dst_cpu, cpus);
 				env.loop = 0;
 				env.loop_break = sched_nr_migrate_break;
 				goto redo;

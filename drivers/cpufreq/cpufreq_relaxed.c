@@ -152,7 +152,7 @@ static void cs_check_cpu(int cpu, unsigned int load)
 static void cs_dbs_timer(struct work_struct *work)
 {
 	struct cs_cpu_dbs_info_s *dbs_info = container_of(work,
-			struct cs_cpu_dbs_info_s, cdbs.work.work);
+			struct cs_cpu_dbs_info_s, cdbs.dwork.work);
 	unsigned int cpu = dbs_info->cdbs.cur_policy->cpu;
 	struct cs_cpu_dbs_info_s *core_dbs_info = &per_cpu(cs_cpu_dbs_info,
 			cpu);
@@ -237,8 +237,8 @@ static ssize_t store_down_threshold(struct dbs_data *dbs_data, const char *buf,
 	int ret;
 	ret = sscanf(buf, "%u", &input);
 
-	/* cannot be lower than 11 otherwise freq will not fall */
-	if (ret != 1 || input < 11 || input > 100 ||
+	/* cannot be lower than 1 otherwise freq will not fall */
+	if (ret != 1 || input < 1 || input > 100 ||
 			input >= cs_tuners->up_threshold)
 		return -EINVAL;
 
@@ -254,8 +254,8 @@ static ssize_t store_down_threshold_suspended(struct dbs_data *dbs_data, const c
 	int ret;
 	ret = sscanf(buf, "%u", &input);
 
-	/* cannot be lower than 11 otherwise freq will not fall */
-	if (ret != 1 || input < 11 || input > 100 ||
+	/* cannot be lower than 1 otherwise freq will not fall */
+	if (ret != 1 || input < 1 || input > 100 ||
 			input >= cs_tuners->up_threshold)
 		return -EINVAL;
 

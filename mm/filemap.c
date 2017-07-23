@@ -1489,6 +1489,11 @@ static ssize_t do_generic_file_read(struct file *filp, loff_t *ppos,
 
 		cond_resched();
 find_page:
+		if (fatal_signal_pending(current)) {
+			error = -EINTR;
+			goto out;
+		}
+
 		page = find_get_page(mapping, index);
 		if (!page) {
 			page_cache_sync_readahead(mapping,
@@ -1894,8 +1899,8 @@ int filemap_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 	} else if (!page) {
 		/* No page in the page cache at all */
 		do_sync_mmap_readahead(vma, ra, file, offset);
-		count_vm_event(PGMAJFAULT);
-		mem_cgroup_count_vm_event(vma->vm_mm, PGMAJFAULT);
+		count_vm_event(PGMAJFAULT_F);
+		mem_cgroup_count_vm_event(vma->vm_mm, PGMAJFAULT_F);
 		ret = VM_FAULT_MAJOR;
 retry_find:
 		page = find_get_page(mapping, offset);

@@ -240,6 +240,17 @@ static int mdss_dsi_request_gpios(struct mdss_dsi_ctrl_pdata *ctrl_pdata)
 			goto disp_en_gpio_err;
 		}
 	}
+#ifdef CONFIG_MACH_FIH_NBQ
+	if (gpio_is_valid(ctrl_pdata->disp_ldo_gpio)) {
+		rc = gpio_request(ctrl_pdata->disp_ldo_gpio,
+						"ldo_enable");
+		if (rc) {
+			pr_err("request ldo_en gpio failed, rc=%d\n",
+				       rc);
+			goto disp_ldo_gpio_err;
+		}
+	}
+#endif
 	rc = gpio_request(ctrl_pdata->rst_gpio, "disp_rst_n");
 	if (rc) {
 		pr_err("request reset gpio failed, rc=%d\n",
@@ -274,6 +285,11 @@ rst_gpio_err:
 	if (gpio_is_valid(ctrl_pdata->disp_en_gpio))
 		gpio_free(ctrl_pdata->disp_en_gpio);
 disp_en_gpio_err:
+#ifdef CONFIG_MACH_FIH_NBQ
+	if (gpio_is_valid(ctrl_pdata->disp_ldo_gpio))
+		gpio_free(ctrl_pdata->disp_ldo_gpio);
+disp_ldo_gpio_err:
+#endif
 	return rc;
 }
 
@@ -304,6 +320,13 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 		pr_debug("%s:%d, reset line not configured\n",
 			   __func__, __LINE__);
 	}
+
+#ifdef CONFIG_MACH_FIH_NBQ
+	if (!gpio_is_valid(ctrl_pdata->disp_ldo_gpio)) {
+		pr_debug("%s:%d, ldo line not configured\n",
+			   __func__, __LINE__);
+	}
+#endif
 
 	if (!gpio_is_valid(ctrl_pdata->rst_gpio)) {
 		pr_debug("%s:%d, reset line not configured\n",
@@ -339,6 +362,11 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 					goto exit;
 				}
 			}
+
+#ifdef CONFIG_MACH_FIH_NBQ
+			if (gpio_is_valid(ctrl_pdata->disp_ldo_gpio))
+				gpio_set_value((ctrl_pdata->disp_ldo_gpio), 1);
+#endif
 
 			for (i = 0; i < pdata->panel_info.rst_seq_len; ++i) {
 				gpio_set_value((ctrl_pdata->rst_gpio),
@@ -380,6 +408,24 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 			pr_debug("%s: Reset panel done\n", __func__);
 		}
 	} else {
+#ifdef CONFIG_MACH_FIH_NBQ
+		if (gpio_is_valid(ctrl_pdata->mode_gpio))
+			gpio_free(ctrl_pdata->mode_gpio);
+		if (gpio_is_valid(ctrl_pdata->bklt_en_gpio)) {
+			gpio_set_value((ctrl_pdata->bklt_en_gpio), 0);
+			gpio_free(ctrl_pdata->bklt_en_gpio);
+		}
+		gpio_set_value((ctrl_pdata->rst_gpio), 0);
+		gpio_free(ctrl_pdata->rst_gpio);
+		if (gpio_is_valid(ctrl_pdata->disp_ldo_gpio)) {
+			gpio_set_value((ctrl_pdata->disp_ldo_gpio), 0);
+			gpio_free(ctrl_pdata->disp_ldo_gpio);
+		}
+		if (gpio_is_valid(ctrl_pdata->disp_en_gpio)) {
+			gpio_set_value((ctrl_pdata->disp_en_gpio), 0);
+			gpio_free(ctrl_pdata->disp_en_gpio);
+		}
+#else
 		if (gpio_is_valid(ctrl_pdata->bklt_en_gpio)) {
 			gpio_set_value((ctrl_pdata->bklt_en_gpio), 0);
 			gpio_free(ctrl_pdata->bklt_en_gpio);
@@ -392,6 +438,7 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 		gpio_free(ctrl_pdata->rst_gpio);
 		if (gpio_is_valid(ctrl_pdata->mode_gpio))
 			gpio_free(ctrl_pdata->mode_gpio);
+#endif
 	}
 
 exit:
@@ -2309,19 +2356,24 @@ static int mdss_panel_parse_display_timings(struct device_node *np,
 
 	timings_np = of_get_child_by_name(np, "qcom,mdss-dsi-display-timings");
 	if (!timings_np) {
-		struct dsi_panel_timing pt;
-		memset(&pt, 0, sizeof(struct dsi_panel_timing));
+		struct dsi_panel_timing *pt;
+
+		pt = kzalloc(sizeof(*pt), GFP_KERNEL);
+		if (!pt)
+			return -ENOMEM;
 
 		/*
 		 * display timings node is not available, fallback to reading
 		 * timings directly from root node instead
 		 */
 		pr_debug("reading display-timings from panel node\n");
-		rc = mdss_dsi_panel_timing_from_dt(np, &pt, panel_data);
+		rc = mdss_dsi_panel_timing_from_dt(np, pt, panel_data);
 		if (!rc) {
-			mdss_dsi_panel_config_res_properties(np, &pt,
+			mdss_dsi_panel_config_res_properties(np, pt,
 					panel_data, true);
-			rc = mdss_dsi_panel_timing_switch(ctrl, &pt.timing);
+			rc = mdss_dsi_panel_timing_switch(ctrl, &pt->timing);
+		} else {
+			kfree(pt);
 		}
 		return rc;
 	}

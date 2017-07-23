@@ -2026,7 +2026,7 @@ static int nested_vmx_check_exception(struct kvm_vcpu *vcpu, unsigned nr)
 	if (!(vmcs12->exception_bitmap & (1u << nr)))
 		return 0;
 
-	nested_vmx_vmexit(vcpu, to_vmx(vcpu)->exit_reason,
+	nested_vmx_vmexit(vcpu, EXIT_REASON_EXCEPTION_NMI,
 			  vmcs_read32(VM_EXIT_INTR_INFO),
 			  vmcs_readl(EXIT_QUALIFICATION));
 	return 1;
@@ -3282,7 +3282,7 @@ static void fix_rmode_seg(int seg, struct kvm_segment *save)
 	}
 
 	vmcs_write16(sf->selector, var.selector);
-	vmcs_write32(sf->base, var.base);
+	vmcs_writel(sf->base, var.base);
 	vmcs_write32(sf->limit, var.limit);
 	vmcs_write32(sf->ar_bytes, vmx_segment_access_rights(&var));
 }

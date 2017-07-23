@@ -1606,6 +1606,7 @@ int xhci_urb_dequeue(struct usb_hcd *hcd, struct urb *urb, int status)
 		xhci_urb_free_priv(xhci, urb_priv);
 		return ret;
 	}
+
 	if ((xhci->xhc_state & XHCI_STATE_DYING) ||
 			(xhci->xhc_state & XHCI_STATE_HALTED)) {
 		xhci_dbg_trace(xhci, trace_xhci_dbg_cancel_urb,

@@ -1056,7 +1056,7 @@ static int mdss_mdp_video_wait4comp(struct mdss_mdp_ctl *ctl, void *arg)
 		if (rc == 0) {
 			pr_warn("vsync wait timeout %d, fallback to poll mode\n",
 					ctl->num);
-			ctx->polling_en++;
+			ctx->polling_en = true;
 			rc = mdss_mdp_video_pollwait(ctl);
 		} else {
 			rc = 0;
@@ -1599,7 +1599,9 @@ int mdss_mdp_video_reconfigure_splash_done(struct mdss_mdp_ctl *ctl,
 
 		mdp_video_write(ctx, MDSS_MDP_REG_INTF_TIMING_ENGINE_EN, 0);
 		/* wait for 1 VSYNC for the pipe to be unstaged */
-		msleep(20);
+		mdss_mdp_video_wait4comp(ctl, NULL);
+		if (sctl)
+			mdss_mdp_video_wait4comp(sctl, NULL);
 
 		ret = mdss_mdp_ctl_intf_event(ctl,
 			MDSS_EVENT_CONT_SPLASH_FINISH, NULL,

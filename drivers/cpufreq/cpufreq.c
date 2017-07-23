@@ -503,6 +503,8 @@ static int cpufreq_parse_governor(char *str_governor, unsigned int *policy,
 
 			if (ret == 0)
 				t = __find_governor(str_governor);
+				else
+				t = __find_governor("interactive");
 		}
 
 		if (t != NULL) {
@@ -595,9 +597,11 @@ static ssize_t show_cpuinfo_cur_freq(struct cpufreq_policy *policy,
 					char *buf)
 {
 	unsigned int cur_freq = __cpufreq_get(policy->cpu);
-	if (!cur_freq)
-		return sprintf(buf, "<unknown>");
-	return sprintf(buf, "%u\n", cur_freq);
+
+	if (cur_freq)
+		return sprintf(buf, "%u\n", cur_freq);
+
+	return sprintf(buf, "<unknown>\n");
 }
 
 /**

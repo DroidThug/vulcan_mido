@@ -43,7 +43,6 @@ enum vidc_msg_prio {
 
 enum vidc_msg_out {
 	VIDC_OUT_PRINTK = 0,
-	VIDC_OUT_FTRACE,
 };
 
 enum msm_vidc_debugfs_event {

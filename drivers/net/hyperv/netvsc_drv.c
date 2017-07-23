@@ -47,6 +47,9 @@ struct net_device_context {
 	struct work_struct work;
 };
 
+/* Restrict GSO size to account for NVGRE */
+#define NETVSC_GSO_MAX_SIZE	62768
+
 #define RING_SIZE_MIN 64
 static int ring_size = 128;
 module_param(ring_size, int, S_IRUGO);
@@ -851,6 +854,7 @@ static int netvsc_probe(struct hv_device *dev,
 
 	net->ethtool_ops = &ethtool_ops;
 	SET_NETDEV_DEV(net, &dev->device);
+	netif_set_gso_max_size(net, NETVSC_GSO_MAX_SIZE);
 
 	/* Notify the netvsc driver of the new device */
 	device_info.ring_size = ring_size;

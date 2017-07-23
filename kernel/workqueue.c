@@ -273,13 +273,8 @@ static bool wq_disable_numa;
 module_param_named(disable_numa, wq_disable_numa, bool, 0444);
 
 /* see the comment above the definition of WQ_POWER_EFFICIENT */
-#ifdef CONFIG_WQ_POWER_EFFICIENT_DEFAULT
 static bool wq_power_efficient = true;
-#else
-static bool wq_power_efficient;
-#endif
-
-module_param_named(power_efficient, wq_power_efficient, bool, 0444);
+module_param_named(power_efficient, wq_power_efficient, bool, 0644);
 
 static bool wq_numa_enabled;		/* unbound NUMA affinity enabled */
 
@@ -2859,6 +2854,31 @@ bool flush_delayed_work(struct delayed_work *dwork)
 }
 EXPORT_SYMBOL(flush_delayed_work);
 
+static bool __cancel_work(struct work_struct *work, bool is_dwork)
+{
+	unsigned long flags;
+	int ret;
+
+	do {
+		ret = try_to_grab_pending(work, is_dwork, &flags);
+	} while (unlikely(ret == -EAGAIN));
+
+	if (unlikely(ret < 0))
+		return false;
+
+	set_work_pool_and_clear_pending(work, get_work_pool_id(work));
+	local_irq_restore(flags);
+	return ret;
+}
+
+/*
+ * See cancel_delayed_work()
+ */
+bool cancel_work(struct work_struct *work)
+{
+	return __cancel_work(work, false);
+}
+
 /**
  * cancel_delayed_work - cancel a delayed work
  * @dwork: delayed_work to cancel
@@ -2877,20 +2897,7 @@ EXPORT_SYMBOL(flush_delayed_work);
  */
 bool cancel_delayed_work(struct delayed_work *dwork)
 {
-	unsigned long flags;
-	int ret;
-
-	do {
-		ret = try_to_grab_pending(&dwork->work, true, &flags);
-	} while (unlikely(ret == -EAGAIN));
-
-	if (unlikely(ret < 0))
-		return false;
-
-	set_work_pool_and_clear_pending(&dwork->work,
-					get_work_pool_id(&dwork->work));
-	local_irq_restore(flags);
-	return ret;
+	return __cancel_work(&dwork->work, true);
 }
 EXPORT_SYMBOL(cancel_delayed_work);
 

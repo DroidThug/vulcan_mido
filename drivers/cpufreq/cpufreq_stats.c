@@ -416,11 +416,17 @@ error_out:
 
 static void cpufreq_stats_update_policy_cpu(struct cpufreq_policy *policy)
 {
-	struct cpufreq_stats *stat = per_cpu(cpufreq_stats_table,
-			policy->last_cpu);
+	struct cpufreq_stats *stat;
 
 	pr_debug("Updating stats_table for new_cpu %u from last_cpu %u\n",
 			policy->cpu, policy->last_cpu);
+	stat = per_cpu(cpufreq_stats_table, policy->cpu);
+	if (stat) {
+		kfree(stat->time_in_state);
+		kfree(stat);
+	}
+
+	stat = per_cpu(cpufreq_stats_table, policy->last_cpu);
 	per_cpu(cpufreq_stats_table, policy->cpu) = per_cpu(cpufreq_stats_table,
 			policy->last_cpu);
 	per_cpu(cpufreq_stats_table, policy->last_cpu) = NULL;
@@ -433,7 +439,6 @@ static void cpufreq_powerstats_create(unsigned int cpu,
 	struct cpufreq_power_stats *powerstats;
 	struct cpufreq_frequency_table *pos;
 	struct device_node *cpu_node;
-	char device_path[16];
 
 	powerstats = kzalloc(sizeof(struct cpufreq_power_stats),
 			GFP_KERNEL);
@@ -457,8 +462,7 @@ static void cpufreq_powerstats_create(unsigned int cpu,
 		powerstats->freq_table[i++] = pos->frequency;
 	powerstats->state_num = i;
 
-	snprintf(device_path, sizeof(device_path), "/cpus/cpu@%d", cpu);
-	cpu_node = of_find_node_by_path(device_path);
+	cpu_node = of_get_cpu_node(cpu, NULL);
 	if (cpu_node) {
 		ret = of_property_read_u32_array(cpu_node, "current",
 				powerstats->curr, count);

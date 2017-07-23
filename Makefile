@@ -1,6 +1,6 @@
 VERSION = 3
 PATCHLEVEL = 18
-SUBLEVEL = 56
+SUBLEVEL = 61
 EXTRAVERSION =
 EXTRAVERSION = -Vulcan
 NAME = Shuffling Zombie Juror
@@ -296,10 +296,13 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 	  else if [ -x /bin/bash ]; then echo /bin/bash; \
 	  else echo sh; fi ; fi)
 
+# Graphite variable
+CHICKEN = -fgraphite -fgraphite-identity -floop-interchange -ftree-loop-distribution -floop-strip-mine -floop-block -ftree-loop-linear -floop-nest-optimize
+
 HOSTCC       = gcc
 HOSTCXX      = g++
-HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer -std=gnu89
-HOSTCXXFLAGS = -O2
+HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -Ofast -fomit-frame-pointer -fgcse-las -flto -fomit-frame-pointer -pthread $(CHICKEN) -std=gnu89
+HOSTCXXFLAGS = -Ofast -DNDEBUG -pipe -flto=4 -Wno-unused $(CHICKEN)
 
 ifeq ($(shell $(HOSTCC) -v 2>&1 | grep -c "clang version"), 1)
 HOSTCFLAGS  += -Wno-unused-value -Wno-unused-parameter \
@@ -355,7 +358,9 @@ include $(srctree)/scripts/Kbuild.include
 # Make variables (CC, etc...)
 AS		= $(CROSS_COMPILE)as
 LD		= $(CROSS_COMPILE)ld
+LD	       += -Ofast --strip-debug
 CC		= ccache $(CROSS_COMPILE)gcc
+CC	       += -Ofast
 CPP		= $(CC) -E
 AR		= $(CROSS_COMPILE)ar
 NM		= $(CROSS_COMPILE)nm
@@ -376,13 +381,14 @@ CHECK		= sparse
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
-CFLAGS_MODULE   =
-AFLAGS_MODULE   =
-LDFLAGS_MODULE  =
-CFLAGS_KERNEL	=
-AFLAGS_KERNEL	=
-CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage -fno-tree-loop-im
 
+CFLAGS_MODULE   = $(CHICKEN)
+AFLAGS_MODULE   = $(CHICKEN)
+LDFLAGS_MODULE  = --strip-debug
+CFLAGS_KERNEL	= $(CHICKEN) -mcpu=cortex-a57 -mtune=cortex-a57 -ftree-loop-vectorize -ftree-loop-distribute-patterns -ftree-slp-vectorize -fvect-cost-model -ftree-partial-pre -fgcse-after-reload -fgcse-lm -fgcse-sm -fsched-spec-load -ffast-math -fsingle-precision-constant -fpredictive-commoning
+AFLAGS_KERNEL	=  $(CHICKEN)
+CFLAGS_KCOV	= -fsanitize-coverage=trace-pc
+CFLAGS_GCOV     = -fprofile-arcs -ftest-coverage -fno-tree-loop-im
 
 # Use USERINCLUDE when you must reference the UAPI directories only.
 USERINCLUDE    := \
@@ -403,18 +409,25 @@ LINUXINCLUDE    := \
 
 KBUILD_CPPFLAGS := -D__KERNEL__
 
-KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
-		   -fno-strict-aliasing -fno-common \
-		   -Werror-implicit-function-declaration \
-		   -Wno-format-security \
-		   -std=gnu89 \
-		   -mcpu=cortex-a53 -mtune=cortex-a53 \
+KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing \
+                   -fno-common -Wno-implicit-function-declaration -Wno-format-security -Wno-incompatible-pointer-types -Wno-bool-compare \
+	           -Wno-memset-transposed-args -Wno-unused-const-variable -Wno-misleading-indentation -Wno-tautological-compare \
+                   -fgcse-after-reload -fno-delete-null-pointer-checks -ftree-loop-vectorize -ftree-loop-distribute-patterns \
+                   -ftree-slp-vectorize -fvect-cost-model -ftree-partial-pre -Wno-unused-const-variable -Wno-misleading-indentation -fgcse-lm \
+	           -fgcse-sm -fsched-spec-load \
+                   -ffast-math -funswitch-loops -fpredictive-commoning -fsingle-precision-constant \
+                   -Wno-declaration-after-statement -Wno-format-extra-args -Wno-int-conversion -Wno-discarded-qualifiers \
+	           -funswitch-loops -fpredictive-commoning -fgcse-after-reload \
+	           -fno-delete-null-pointer-checks -Wno-error=bool-compare -ftree-loop-vectorize -ftree-loop-distribute-patterns -ftree-slp-vectorize \
+ 	           -fvect-cost-model -ftree-partial-pre -fgcse-lm -fgcse-sm -fsched-spec-load -fsingle-precision-constant -std=gnu89 \
+                   -mcpu=cortex-a53 -mtune=cortex-a53 \
+                   -std=gnu89
 
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
 KBUILD_AFLAGS_MODULE  := -DMODULE
-KBUILD_CFLAGS_MODULE  := -DMODULE
+KBUILD_CFLAGS_MODULE  := -DMODULE -fno-pic
 KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
@@ -639,7 +652,7 @@ KBUILD_CFLAGS	+= $(call cc-disable-warning,array-bounds,)
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os
 else
-KBUILD_CFLAGS	+= -O2 $(call cc-disable-warning,maybe-uninitialized,)
+KBUILD_CFLAGS	+= -Ofast $(call cc-disable-warning,maybe-uninitialized,)
 endif
 
 # Tell gcc to never replace conditional load with a non-conditional one
@@ -717,6 +730,12 @@ KBUILD_CFLAGS += $(call cc-disable-warning, unused-but-set-variable)
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-const-variable)
 endif
 
+# Shat tha fak up warnings
+KBUILD_CFLAGS += $(call cc-disable-warning,maybe-uninitialized)
+KBUILD_CFLAGS += $(call cc-disable-warning,array-bounds)
+KBUILD_CFLAGS += $(call cc-disable-warning,unused-function)
+KBUILD_CFLAGS += $(call cc-disable-warning, unused-variable)
+
 # ifdef CONFIG_FRAME_POINTER
 # KBUILD_CFLAGS	+= -fno-omit-frame-pointer -fno-optimize-sibling-calls
 # else
@@ -732,11 +751,13 @@ KBUILD_CFLAGS	+= -fomit-frame-pointer
 
 KBUILD_CFLAGS   += $(call cc-option, -fno-var-tracking-assignments)
 
+KBUILD_CFLAGS   += $(call cc-option, -fno-var-tracking-assignments)
+
 ifdef CONFIG_DEBUG_INFO
 ifdef CONFIG_DEBUG_INFO_SPLIT
 KBUILD_CFLAGS   += $(call cc-option, -gsplit-dwarf, -g)
 else
-KBUILD_CFLAGS	+= -g
+KBUILD_CFLAGS	+= -gdwarf-2
 endif
 KBUILD_AFLAGS	+= -Wa,-gdwarf-2
 endif
@@ -1004,6 +1025,8 @@ prepare2: prepare3 outputmakefile asm-generic
 prepare1: prepare2 $(version_h) include/generated/utsrelease.h \
                    include/config/auto.conf
 	$(cmd_crmodverdir)
+	$(Q)test -e include/generated/autoksyms.h || \
+	    touch   include/generated/autoksyms.h
 
 archprepare: archheaders archscripts prepare1 scripts_basic
 

@@ -400,6 +400,9 @@ cifs_reconnect(struct TCP_Server_Info *server)
 		mutex_unlock(&server->srv_mutex);
 	} while (server->tcpStatus == CifsNeedReconnect);
 
+	if (server->tcpStatus == CifsNeedNegotiate)
+		mod_delayed_work(cifsiod_wq, &server->echo, 0);
+
 	return rc;
 }
 
@@ -409,18 +412,27 @@ cifs_echo_request(struct work_struct *work)
 	int rc;
 	struct TCP_Server_Info *server = container_of(work,
 					struct TCP_Server_Info, echo.work);
+	unsigned long echo_interval;
 
 	/*
-	 * We cannot send an echo if it is disabled or until the
-	 * NEGOTIATE_PROTOCOL request is done, which is indicated by
-	 * server->ops->need_neg() == true. Also, no need to ping if
-	 * we got a response recently.
+	 * If we need to renegotiate, set echo interval to zero to
+	 * immediately call echo service where we can renegotiate.
+	 */
+	if (server->tcpStatus == CifsNeedNegotiate)
+		echo_interval = 0;
+	else
+		echo_interval = SMB_ECHO_INTERVAL;
+
+	/*
+	 * We cannot send an echo if it is disabled.
+	 * Also, no need to ping if we got a response recently.
 	 */
 
 	if (server->tcpStatus == CifsNeedReconnect ||
-	    server->tcpStatus == CifsExiting || server->tcpStatus == CifsNew ||
+	    server->tcpStatus == CifsExiting ||
+	    server->tcpStatus == CifsNew ||
 	    (server->ops->can_echo && !server->ops->can_echo(server)) ||
-	    time_before(jiffies, server->lstrp + SMB_ECHO_INTERVAL - HZ))
+	    time_before(jiffies, server->lstrp + echo_interval - HZ))
 		goto requeue_echo;
 
 	rc = server->ops->echo ? server->ops->echo(server) : -ENOSYS;
@@ -2755,6 +2767,24 @@ compare_mount_options(struct super_block *sb, struct cifs_mnt_data *mnt_data)
 	return 1;
 }
 
+static int
+match_prepath(struct super_block *sb, struct cifs_mnt_data *mnt_data)
+{
+	struct cifs_sb_info *old = CIFS_SB(sb);
+	struct cifs_sb_info *new = mnt_data->cifs_sb;
+
+	if (old->mnt_cifs_flags & CIFS_MOUNT_USE_PREFIX_PATH) {
+		if (!(new->mnt_cifs_flags & CIFS_MOUNT_USE_PREFIX_PATH))
+			return 0;
+		/* The prepath should be null terminated strings */
+		if (strcmp(new->prepath, old->prepath))
+			return 0;
+
+		return 1;
+	}
+	return 0;
+}
+
 int
 cifs_match_super(struct super_block *sb, void *data)
 {
@@ -2782,7 +2812,8 @@ cifs_match_super(struct super_block *sb, void *data)
 
 	if (!match_server(tcp_srv, volume_info) ||
 	    !match_session(ses, volume_info) ||
-	    !match_tcon(tcon, volume_info->UNC)) {
+	    !match_tcon(tcon, volume_info->UNC) ||
+	    !match_prepath(sb, mnt_data)) {
 		rc = 0;
 		goto out;
 	}
@@ -3198,7 +3229,7 @@ void reset_cifs_unix_caps(unsigned int xid, struct cifs_tcon *tcon,
 	}
 }
 
-void cifs_setup_cifs_sb(struct smb_vol *pvolume_info,
+int cifs_setup_cifs_sb(struct smb_vol *pvolume_info,
 			struct cifs_sb_info *cifs_sb)
 {
 	INIT_DELAYED_WORK(&cifs_sb->prune_tlinks, cifs_prune_tlinks);
@@ -3292,6 +3323,15 @@ void cifs_setup_cifs_sb(struct smb_vol *pvolume_info,
 
 	if ((pvolume_info->cifs_acl) && (pvolume_info->dynperm))
 		cifs_dbg(VFS, "mount option dynperm ignored if cifsacl mount option supported\n");
+
+
+	if (pvolume_info->prepath) {
+		cifs_sb->prepath = kstrdup(pvolume_info->prepath, GFP_KERNEL);
+		if (cifs_sb->prepath == NULL)
+			return -ENOMEM;
+	}
+
+	return 0;
 }
 
 static void
@@ -3625,15 +3665,16 @@ remote_path_check:
 			kfree(full_path);
 			goto mount_fail_check;
 		}
-
-		rc = cifs_are_all_path_components_accessible(server,
-							     xid, tcon, cifs_sb,
-							     full_path);
-		if (rc != 0) {
-			cifs_dbg(VFS, "cannot query dirs between root and final path, "
-				 "enabling CIFS_MOUNT_USE_PREFIX_PATH\n");
-			cifs_sb->mnt_cifs_flags |= CIFS_MOUNT_USE_PREFIX_PATH;
-			rc = 0;
+		if (rc != -EREMOTE) {
+			rc = cifs_are_all_path_components_accessible(server,
+								     xid, tcon, cifs_sb,
+								     full_path);
+			if (rc != 0) {
+				cifs_dbg(VFS, "cannot query dirs between root and final path, "
+					 "enabling CIFS_MOUNT_USE_PREFIX_PATH\n");
+				cifs_sb->mnt_cifs_flags |= CIFS_MOUNT_USE_PREFIX_PATH;
+				rc = 0;
+			}
 		}
 		kfree(full_path);
 	}

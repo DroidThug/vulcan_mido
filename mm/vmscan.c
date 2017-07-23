@@ -539,6 +539,18 @@ static pageout_t pageout(struct page *page, struct address_space *mapping,
 		if (!PageWriteback(page)) {
 			/* synchronous write or broken a_ops? */
 			ClearPageReclaim(page);
+			if (PageError(page) && PageSwapCache(page)) {
+				ClearPageError(page);
+				/*
+				 * We lock the page here because it is required
+				 * to free the swp space later in
+				 * shrink_page_list. But the page may be
+				 * unclocked by functions like
+				 * handle_write_error.
+				 */
+				__set_page_locked(page);
+				return PAGE_ACTIVATE;
+			}
 		}
 		trace_mm_vmscan_writepage(page, trace_reclaim_flags(page));
 		inc_zone_page_state(page, NR_VMSCAN_WRITE);
@@ -1446,14 +1458,6 @@ static int __too_many_isolated(struct zone *zone, int file,
 			isolated = zone_page_state(zone, NR_ISOLATED_ANON);
 		}
 	}
-
-	/*
-	 * GFP_NOIO/GFP_NOFS callers are allowed to isolate more pages, so they
-	 * won't get blocked by normal direct-reclaimers, forming a circular
-	 * deadlock.
-	 */
-	if ((sc->gfp_mask & GFP_IOFS) == GFP_IOFS)
-		inactive >>= 3;
 
 	return isolated > inactive;
 }

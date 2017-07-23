@@ -171,6 +171,14 @@ static void dump_backtrace(struct pt_regs *regs, struct task_struct *tsk)
 	}
 }
 
+static void dump_context_switch_regs(struct task_struct *tsk)
+{
+	unsigned long start = (unsigned long)&tsk->thread.cpu_context;
+	unsigned long end = start + sizeof(tsk->thread.cpu_context);
+	dump_mem(KERN_EMERG, "Context switch saved registers",
+		start, end);
+}
+
 void show_stack(struct task_struct *tsk, unsigned long *sp)
 {
 	dump_backtrace(NULL, tsk);
@@ -188,10 +196,9 @@ void show_stack(struct task_struct *tsk, unsigned long *sp)
 #define S_SMP ""
 #endif
 
-static int __die(const char *str, int err, struct thread_info *thread,
-		 struct pt_regs *regs)
+static int __die(const char *str, int err, struct pt_regs *regs)
 {
-	struct task_struct *tsk = thread->task;
+	struct task_struct *tsk = current;
 	static int die_counter;
 	int ret;
 
@@ -206,9 +213,11 @@ static int __die(const char *str, int err, struct thread_info *thread,
 	print_modules();
 	__show_regs(regs);
 	pr_emerg("Process %.*s (pid: %d, stack limit = 0x%p)\n",
-		 TASK_COMM_LEN, tsk->comm, task_pid_nr(tsk), thread + 1);
+		 TASK_COMM_LEN, tsk->comm, task_pid_nr(tsk),
+		 end_of_stack(tsk));
 
 	if (!user_mode(regs) || in_interrupt()) {
+		dump_context_switch_regs(tsk);
 		dump_backtrace(regs, tsk);
 		dump_instr(KERN_EMERG, regs);
 	}
@@ -271,7 +280,6 @@ static void oops_end(unsigned long flags, struct pt_regs *regs, int notify)
  */
 void die(const char *str, struct pt_regs *regs, int err)
 {
-	struct thread_info *thread = current_thread_info();
 	enum bug_trap_type bug_type = BUG_TRAP_TYPE_NONE;
 	unsigned long flags = oops_begin();
 	int ret;
@@ -281,7 +289,7 @@ void die(const char *str, struct pt_regs *regs, int err)
 	if (bug_type != BUG_TRAP_TYPE_NONE)
 		str = "Oops - BUG";
 
-	ret = __die(str, err, thread, regs);
+	ret = __die(str, err, regs);
 
 	oops_end(flags, regs, ret);
 }

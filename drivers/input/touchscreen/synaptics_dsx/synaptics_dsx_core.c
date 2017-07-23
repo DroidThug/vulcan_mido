@@ -925,6 +925,11 @@ static int synaptics_rmi4_f11_abs_report(struct synaptics_rmi4_data *rmi4_data,
 	if (retval < 0)
 		return 0;
 
+	input_event(rmi4_data->input_dev, EV_SYN, SYN_TIME_SEC,
+			ktime_to_timespec(rmi4_data->timestamp).tv_sec);
+	input_event(rmi4_data->input_dev, EV_SYN, SYN_TIME_NSEC,
+			ktime_to_timespec(rmi4_data->timestamp).tv_nsec);
+
 	for (finger = 0; finger < fingers_supported; finger++) {
 		reg_index = finger / 4;
 		finger_shift = (finger % 4) * 2;
@@ -1113,6 +1118,11 @@ static int synaptics_rmi4_f12_abs_report(struct synaptics_rmi4_data *rmi4_data,
 		return 0;
 
 	data = (struct synaptics_rmi4_f12_finger_data *)fhandler->data;
+
+	input_event(rmi4_data->input_dev, EV_SYN, SYN_TIME_SEC,
+			ktime_to_timespec(rmi4_data->timestamp).tv_sec);
+	input_event(rmi4_data->input_dev, EV_SYN, SYN_TIME_NSEC,
+			ktime_to_timespec(rmi4_data->timestamp).tv_nsec);
 
 	for (finger = 0; finger < fingers_to_process; finger++) {
 		finger_data = data + finger;
@@ -1442,6 +1452,8 @@ static void synaptics_rmi4_sensor_report(struct synaptics_rmi4_data *rmi4_data)
 static irqreturn_t synaptics_rmi4_irq(int irq, void *data)
 {
 	struct synaptics_rmi4_data *rmi4_data = data;
+
+	rmi4_data->timestamp = ktime_get();
 
 	if (IRQ_HANDLED == synaptics_filter_interrupt(data))
 		return IRQ_HANDLED;
@@ -3926,24 +3938,39 @@ static void fb_notify_resume_work(struct work_struct *work)
 	synaptics_rmi4_resume(&(rmi4_data->input_dev->dev));
 }
 
+static bool is_enable_touch(struct fb_event *evdata)
+{
+	int *blank;
+
+	blank = evdata->data;
+	switch (*blank) {
+	case FB_BLANK_UNBLANK:
+	case FB_BLANK_NORMAL:
+	case FB_BLANK_VSYNC_SUSPEND:
+	case FB_BLANK_HSYNC_SUSPEND:
+		return true;
+
+	case FB_BLANK_POWERDOWN:
+	default:
+		return false;
+	}
+}
+
 static int fb_notifier_callback(struct notifier_block *self,
 				unsigned long event, void *data)
 {
 	struct fb_event *evdata = data;
-	int *blank;
 	struct synaptics_rmi4_data *rmi4_data =
 		container_of(self, struct synaptics_rmi4_data, fb_notif);
 
 	if (evdata && evdata->data && rmi4_data) {
-		blank = evdata->data;
 		if (rmi4_data->hw_if->board_data->resume_in_workqueue) {
 			if (event == FB_EARLY_EVENT_BLANK) {
 				synaptics_secure_touch_stop(rmi4_data, 0);
-				if (*blank == FB_BLANK_UNBLANK)
+				if (is_enable_touch(evdata))
 					schedule_work(
 						&(rmi4_data->fb_notify_work));
-			} else if (event == FB_EVENT_BLANK &&
-					*blank == FB_BLANK_POWERDOWN) {
+			} else if (event == FB_EVENT_BLANK && !is_enable_touch(evdata)) {
 					flush_work(
 						&(rmi4_data->fb_notify_work));
 					synaptics_rmi4_suspend(
@@ -3953,10 +3980,10 @@ static int fb_notifier_callback(struct notifier_block *self,
 			if (event == FB_EARLY_EVENT_BLANK) {
 				synaptics_secure_touch_stop(rmi4_data, 0);
 			} else if (event == FB_EVENT_BLANK) {
-				if (*blank == FB_BLANK_UNBLANK)
+				if (is_enable_touch(evdata))
 					synaptics_rmi4_resume(
 						&(rmi4_data->input_dev->dev));
-				else if (*blank == FB_BLANK_POWERDOWN)
+				else
 					synaptics_rmi4_suspend(
 						&(rmi4_data->input_dev->dev));
 			}

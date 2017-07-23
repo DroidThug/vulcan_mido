@@ -2931,7 +2931,8 @@ static int __ref update_offline_cores(int val)
 
 	if (pend_hotplug_req && !in_suspend && !retry_in_progress) {
 		retry_in_progress = true;
-		schedule_delayed_work(&retry_hotplug_work,
+		queue_delayed_work(system_power_efficient_wq,
+			&retry_hotplug_work,
 			msecs_to_jiffies(HOTPLUG_RETRY_INTERVAL_MS));
 	}
 
@@ -3424,8 +3425,9 @@ static void check_temp(struct work_struct *work)
 
 reschedule:
 	if (polling_enabled)
-		schedule_delayed_work(&check_temp_work,
-				msecs_to_jiffies(msm_thermal_info.poll_ms));
+		queue_delayed_work(system_power_efficient_wq,
+			&check_temp_work,
+			msecs_to_jiffies(msm_thermal_info.poll_ms));
 }
 
 static int __ref msm_thermal_cpu_callback(struct notifier_block *nfb,
@@ -4728,6 +4730,27 @@ static struct kernel_param_ops module_ops = {
 module_param_cb(enabled, &module_ops, &enabled, 0644);
 MODULE_PARM_DESC(enabled, "enforce thermal limit on cpu");
 
+/* Poll ms */
+module_param_named(poll_ms, msm_thermal_info.poll_ms, uint, 0664);
+
+/* Temp Threshold */
+module_param_named(temp_threshold, msm_thermal_info.limit_temp_degC,
+			int, 0664);
+module_param_named(core_limit_temp_degC, msm_thermal_info.core_limit_temp_degC,
+		   uint, 0644);
+module_param_named(hotplug_temp_degC, msm_thermal_info.hotplug_temp_degC,
+		   uint, 0644);
+module_param_named(freq_mitig_temp_degc,
+		   msm_thermal_info.freq_mitig_temp_degc, uint, 0644);
+
+/* Control Mask */
+module_param_named(freq_control_mask,
+		   msm_thermal_info.bootup_freq_control_mask, uint, 0644);
+module_param_named(core_control_mask, msm_thermal_info.core_control_mask,
+			uint, 0664);
+module_param_named(freq_mitig_control_mask,
+		   msm_thermal_info.freq_mitig_control_mask, uint, 0644);
+
 static ssize_t show_cc_enabled(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
@@ -5154,7 +5177,7 @@ int msm_thermal_init(struct msm_thermal_data *pdata)
 	pm_notifier(msm_thermal_suspend_callback, 0);
 	INIT_DELAYED_WORK(&retry_hotplug_work, retry_hotplug);
 	INIT_DELAYED_WORK(&check_temp_work, check_temp);
-	schedule_delayed_work(&check_temp_work, 0);
+	queue_delayed_work(system_power_efficient_wq, &check_temp_work, 0);
 
 	if (num_possible_cpus() > 1) {
 		cpus_previously_online_update();

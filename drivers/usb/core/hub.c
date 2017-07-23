@@ -986,6 +986,7 @@ enum hub_activation_type {
 
 static void hub_init_func2(struct work_struct *ws);
 static void hub_init_func3(struct work_struct *ws);
+static void hub_release(struct kref *kref);
 
 static void hub_activate(struct usb_hub *hub, enum hub_activation_type type)
 {
@@ -1353,7 +1354,13 @@ static int hub_configure(struct usb_hub *hub,
 	if (ret < 0) {
 		message = "can't read hub descriptor";
 		goto fail;
-	} else if (hub->descriptor->bNbrPorts > USB_MAXCHILDREN) {
+	}
+
+	maxchild = USB_MAXCHILDREN;
+	if (hub_is_superspeed(hdev))
+		maxchild = min_t(unsigned, maxchild, USB_SS_MAXPORTS);
+
+	if (hub->descriptor->bNbrPorts > maxchild) {
 		message = "hub has too many ports!";
 		ret = -ENODEV;
 		goto fail;

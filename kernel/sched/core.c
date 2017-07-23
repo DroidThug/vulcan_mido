@@ -5,6 +5,8 @@
  *
  *  Copyright (C) 1991-2002  Linus Torvalds
  *
+ *  Copyright (c) 2014, NVIDIA CORPORATION.  All rights reserved.
+ *
  *  1996-12-23  Modified by Dave Grothe to fix bugs in semaphores and
  *		make semaphores SMP safe
  *  1998-11-19	Implemented schedule_timeout() and related stuff
@@ -1633,6 +1635,7 @@ static inline int got_boost_kick(void)
 
 	return test_bit(BOOST_KICK, &rq->hmp_flags);
 }
+
 
 static inline void clear_boost_kick(int cpu)
 {
@@ -4589,9 +4592,10 @@ unsigned long wait_task_inactive(struct task_struct *p, long match_state)
 		 * is actually now running somewhere else!
 		 */
 		while (task_running(rq, p)) {
-			if (match_state && unlikely(p->state != match_state))
+			if (match_state && unlikely(cpu_relaxed_read_long
+ 				(&(p->state)) != match_state))
 				return 0;
-			cpu_relax();
+			cpu_read_relax();
 		}
 
 		/*
@@ -5108,8 +5112,8 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
 	 * If the owning (remote) cpu is still in the middle of schedule() with
 	 * this task as prev, wait until its done referencing the task.
 	 */
-	while (p->on_cpu)
-		cpu_relax();
+	while (cpu_relaxed_read(&(p->on_cpu)))
+		cpu_read_relax();
 	/*
 	 * Pairs with the smp_wmb() in finish_lock_switch().
 	 */
@@ -5594,6 +5598,20 @@ static int dl_overflow(struct task_struct *p, int policy,
 }
 
 extern void init_dl_bw(struct dl_bw *dl_b);
+/*
+ * a1 = a0 * e + a * (1 - e)
+ */
+static unsigned long
+calc_load(unsigned long load, unsigned long exp, unsigned long active)
+{
+	unsigned long newload;
+
+	newload = load * exp + active * (FIXED_1 - exp);
+	if (active >= load)
+		newload += FIXED_1-1;
+
+	return newload / FIXED_1;
+} 
 
 /*
  * wake_up_new_task - wake up a newly created task for the first time.
@@ -5942,6 +5960,36 @@ unsigned long nr_iowait_cpu(int cpu)
 	struct rq *this = cpu_rq(cpu);
 	return atomic_read(&this->nr_iowait);
 }
+
+#ifdef CONFIG_CPU_QUIET
+u64 nr_running_integral(unsigned int cpu)
+{
+	unsigned int seqcnt;
+	u64 integral;
+	struct rq *q;
+
+	if (cpu >= nr_cpu_ids)
+		return 0;
+
+	q = cpu_rq(cpu);
+
+	/*
+	 * Update average to avoid reading stalled value if there were
+	 * no run-queue changes for a long time. On the other hand if
+	 * the changes are happening right now, just read current value
+	 * directly.
+	 */
+
+	seqcnt = read_seqcount_begin(&q->ave_seqcnt);
+	integral = do_nr_running_integral(q);
+	if (read_seqcount_retry(&q->ave_seqcnt, seqcnt)) {
+		read_seqcount_begin(&q->ave_seqcnt);
+		integral = q->nr_running_integral;
+	}
+
+	return integral;
+}
+#endif
 
 void get_iowait_load(unsigned long *nr_waiters, unsigned long *load)
 {
@@ -8382,8 +8430,13 @@ static int __migrate_task(struct task_struct *p, int src_cpu, int dest_cpu)
 	int ret = 0;
 	int check_groups;
 
-	if (unlikely(!cpu_active(dest_cpu)))
-		return ret;
+	if (p->flags & PF_KTHREAD) {
+		if (unlikely(!cpu_online(dest_cpu)))
+			return ret;
+	} else {
+		if (unlikely(!cpu_active(dest_cpu)))
+			return ret;
+	}
 
 	rq = cpu_rq(src_cpu);
 
@@ -8837,6 +8890,7 @@ migration_call(struct notifier_block *nfb, unsigned long action, void *hcpu)
 		set_window_start(rq);
 		raw_spin_unlock_irqrestore(&rq->lock, flags);
 		rq->calc_load_update = calc_load_update;
+		rq->next_balance = jiffies;
 		break;
 
 	case CPU_ONLINE:

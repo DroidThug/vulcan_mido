@@ -19,12 +19,24 @@
 #include "cpufreq_governor.h"
 
 /* On-demand governor macros */
-#define DEF_FREQUENCY_UP_THRESHOLD		(80)
-#define DEF_SAMPLING_DOWN_FACTOR		(1)
+#if defined(CONFIG_ZEN_INTERACTIVE) && defined(CONFIG_SCHED_MUQSS)
+	#define DEF_FREQUENCY_UP_THRESHOLD	(45)
+	#define MICRO_FREQUENCY_UP_THRESHOLD	(45)
+	#define MIN_FREQUENCY_UP_THRESHOLD	(6)
+	#define DEF_SAMPLING_DOWN_FACTOR	(10)
+#elif defined(CONFIG_ZEN_INTERACTIVE)
+	#define DEF_FREQUENCY_UP_THRESHOLD	(80)
+	#define MICRO_FREQUENCY_UP_THRESHOLD	(95)
+	#define MIN_FREQUENCY_UP_THRESHOLD	(1)
+	#define DEF_SAMPLING_DOWN_FACTOR	(10)
+#else
+	#define DEF_FREQUENCY_UP_THRESHOLD	(80)
+	#define MICRO_FREQUENCY_UP_THRESHOLD	(95)
+	#define MIN_FREQUENCY_UP_THRESHOLD	(1)
+	#define DEF_SAMPLING_DOWN_FACTOR	(1)
+#endif
 #define MAX_SAMPLING_DOWN_FACTOR		(100000)
-#define MICRO_FREQUENCY_UP_THRESHOLD		(95)
 #define MICRO_FREQUENCY_MIN_SAMPLE_RATE		(10000)
-#define MIN_FREQUENCY_UP_THRESHOLD		(11)
 #define MAX_FREQUENCY_UP_THRESHOLD		(100)
 
 static DEFINE_PER_CPU(struct od_cpu_dbs_info_s, od_cpu_dbs_info);
@@ -195,7 +207,7 @@ static void od_check_cpu(int cpu, unsigned int load)
 static void od_dbs_timer(struct work_struct *work)
 {
 	struct od_cpu_dbs_info_s *dbs_info =
-		container_of(work, struct od_cpu_dbs_info_s, cdbs.work.work);
+		container_of(work, struct od_cpu_dbs_info_s, cdbs.dwork.work);
 	unsigned int cpu = dbs_info->cdbs.cur_policy->cpu;
 	struct od_cpu_dbs_info_s *core_dbs_info = &per_cpu(od_cpu_dbs_info,
 			cpu);
@@ -274,27 +286,17 @@ static void update_sampling_rate(struct dbs_data *dbs_data,
 		dbs_info = &per_cpu(od_cpu_dbs_info, cpu);
 		cpufreq_cpu_put(policy);
 
-		mutex_lock(&dbs_info->cdbs.timer_mutex);
-
-		if (!delayed_work_pending(&dbs_info->cdbs.work)) {
-			mutex_unlock(&dbs_info->cdbs.timer_mutex);
-			continue;
-		}
-
 		next_sampling = jiffies + usecs_to_jiffies(new_rate);
-		appointed_at = dbs_info->cdbs.work.timer.expires;
+		appointed_at = dbs_info->cdbs.dwork.timer.expires;
 
 		if (time_before(next_sampling, appointed_at)) {
 
-			mutex_unlock(&dbs_info->cdbs.timer_mutex);
-			cancel_delayed_work_sync(&dbs_info->cdbs.work);
-			mutex_lock(&dbs_info->cdbs.timer_mutex);
+			cancel_delayed_work_sync(&dbs_info->cdbs.dwork);
 
 			gov_queue_work(dbs_data, dbs_info->cdbs.cur_policy,
 					usecs_to_jiffies(new_rate), true);
 
 		}
-		mutex_unlock(&dbs_info->cdbs.timer_mutex);
 	}
 }
 
