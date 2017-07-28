@@ -315,7 +315,7 @@ static void elantech_report_semi_mt_data(struct input_dev *dev,
 					 unsigned int x2, unsigned int y2)
 {
 	elantech_set_slot(dev, 0, num_fingers != 0, x1, y1);
-	elantech_set_slot(dev, 1, num_fingers == 2, x2, y2);
+	elantech_set_slot(dev, 1, num_fingers >= 2, x2, y2);
 }
 
 /*
@@ -1532,6 +1532,13 @@ static const struct dmi_system_id no_hw_res_dmi_table[] = {
 		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "GIGABYTE"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "U2442"),
+		},
+	},
+	{
+		/* Fujitsu LIFEBOOK U745 does not work with crc_enabled == 0 */
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "FUJITSU"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "LIFEBOOK U745"),
 		},
 	},
 #endif

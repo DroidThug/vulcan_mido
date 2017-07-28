@@ -172,7 +172,8 @@ msmsdcc_request_end(struct msmsdcc_host *host, struct mmc_request *mrq)
 	if (mrq->data)
 		mrq->data->bytes_xfered = host->curr.data_xfered;
 	if (mrq->cmd->error == -ETIMEDOUT)
-		mdelay(5);
+		DBG(host, "op %02x arg %08x flags %08x: TIMEOUT\n",
+			mrq->cmd->opcode, mrq->cmd->arg, mrq->cmd->flags);
 
 #if BUSCLK_PWRSAVE
 	msmsdcc_disable_clocks(host, 1);

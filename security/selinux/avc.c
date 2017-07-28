@@ -745,6 +745,10 @@ noinline int slow_avc_audit(u32 ssid, u32 tsid, u16 tclass,
 	struct common_audit_data stack_data;
 	struct selinux_audit_data sad;
 
+	/* Only log permissive=1 messages for SECURITY_SELINUX_DEVELOP */
+	if (denied && !result)
+		return 0;
+
 	if (!a) {
 		a = &stack_data;
 		a->type = LSM_AUDIT_DATA_NONE;
@@ -801,11 +805,6 @@ int __init avc_add_callback(int (*callback)(u32 event), u32 events)
 	avc_callbacks = c;
 out:
 	return rc;
-}
-
-static inline int avc_sidcmp(u32 x, u32 y)
-{
-	return (x == y || x == SECSID_WILD || y == SECSID_WILD);
 }
 
 /**

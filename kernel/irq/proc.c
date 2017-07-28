@@ -409,6 +409,7 @@ void register_irq_proc(unsigned int irq, struct irq_desc *desc)
 
 	proc_create_data("spurious", 0444, desc->dir,
 			 &irq_spurious_proc_fops, (void *)(long)irq);
+
 	proc_create_data("disable_depth", 0444, desc->dir,
 			 &irq_disable_depth_proc_fops, (void *)(long)irq);
 	proc_create_data("wake_depth", 0444, desc->dir,

@@ -85,6 +85,8 @@ void zfcp_dbf_hba_fsf_res(char *tag, struct zfcp_fsf_req *req)
 	rec->u.res.req_issued = req->issued;
 	rec->u.res.prot_status = q_pref->prot_status;
 	rec->u.res.fsf_status = q_head->fsf_status;
+	rec->u.res.port_handle = q_head->port_handle;
+	rec->u.res.lun_handle = q_head->lun_handle;
 
 	memcpy(rec->u.res.prot_status_qual, &q_pref->prot_status_qual,
 	       FSF_PROT_STATUS_QUAL_SIZE);
@@ -241,7 +243,8 @@ static void zfcp_dbf_set_common(struct zfcp_dbf_rec *rec,
 	if (sdev) {
 		rec->lun_status = atomic_read(&sdev_to_zfcp(sdev)->status);
 		rec->lun = zfcp_scsi_dev_lun(sdev);
-	}
+	} else
+		rec->lun = ZFCP_DBF_INVALID_LUN;
 }
 
 /**
@@ -320,6 +323,38 @@ void zfcp_dbf_rec_run(char *tag, struct zfcp_erp_action *erp)
 	spin_unlock_irqrestore(&dbf->rec_lock, flags);
 }
 
+/**
+ * zfcp_dbf_rec_run_wka - trace wka port event with info like running recovery
+ * @tag: identifier for event
+ * @wka_port: well known address port
+ * @req_id: request ID to correlate with potential HBA trace record
+ */
+void zfcp_dbf_rec_run_wka(char *tag, struct zfcp_fc_wka_port *wka_port,
+			  u64 req_id)
+{
+	struct zfcp_dbf *dbf = wka_port->adapter->dbf;
+	struct zfcp_dbf_rec *rec = &dbf->rec_buf;
+	unsigned long flags;
+
+	spin_lock_irqsave(&dbf->rec_lock, flags);
+	memset(rec, 0, sizeof(*rec));
+
+	rec->id = ZFCP_DBF_REC_RUN;
+	memcpy(rec->tag, tag, ZFCP_DBF_TAG_LEN);
+	rec->port_status = wka_port->status;
+	rec->d_id = wka_port->d_id;
+	rec->lun = ZFCP_DBF_INVALID_LUN;
+
+	rec->u.run.fsf_req_id = req_id;
+	rec->u.run.rec_status = ~0;
+	rec->u.run.rec_step = ~0;
+	rec->u.run.rec_action = ~0;
+	rec->u.run.rec_count = ~0;
+
+	debug_event(dbf->rec, 1, rec, sizeof(*rec));
+	spin_unlock_irqrestore(&dbf->rec_lock, flags);
+}
+
 static inline
 void zfcp_dbf_san(char *tag, struct zfcp_dbf *dbf, void *data, u8 id, u16 len,
 		  u64 req_id, u32 d_id)
@@ -354,7 +389,7 @@ void zfcp_dbf_san_req(char *tag, struct zfcp_fsf_req *fsf, u32 d_id)
 	struct zfcp_fsf_ct_els *ct_els = fsf->data;
 	u16 length;
 
-	length = (u16)(ct_els->req->length + FC_CT_HDR_LEN);
+	length = (u16)(ct_els->req->length);
 	zfcp_dbf_san(tag, dbf, sg_virt(ct_els->req), ZFCP_DBF_SAN_REQ, length,
 		     fsf->req_id, d_id);
 }
@@ -370,9 +405,9 @@ void zfcp_dbf_san_res(char *tag, struct zfcp_fsf_req *fsf)
 	struct zfcp_fsf_ct_els *ct_els = fsf->data;
 	u16 length;
 
-	length = (u16)(ct_els->resp->length + FC_CT_HDR_LEN);
+	length = (u16)(ct_els->resp->length);
 	zfcp_dbf_san(tag, dbf, sg_virt(ct_els->resp), ZFCP_DBF_SAN_RES, length,
-		     fsf->req_id, 0);
+		     fsf->req_id, ct_els->d_id);
 }
 
 /**
